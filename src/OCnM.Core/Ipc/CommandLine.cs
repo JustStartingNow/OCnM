@@ -19,7 +19,6 @@ public sealed record CommandLineOptions
 
 public static class CommandLine
 {
-    public const string BackendEnvVar = "SLOTTY_BACKEND";
 
     public const string HelpText = """
         OCnM: Open, Copy 'n' Move
@@ -35,7 +34,7 @@ public static class CommandLine
           --quit        Quit the running instance
 
         Options:
-          --backend x11|wayland   Linux display backend (also: SLOTTY_BACKEND)
+          --backend x11|wayland   Linux display backend (also: OCNM_BACKEND)
           --version               Print the version
           -h, --help              Show this help
         """;
@@ -123,7 +122,7 @@ public static class CommandLine
         }
     }
 
-    /// <summary>The backend to use: --backend beats SLOTTY_BACKEND beats the config setting.</summary>
+    /// <summary>The backend to use: --backend beats OCNM_BACKEND (or legacy SLOTTY_BACKEND) beats the config setting.</summary>
     public static LinuxBackend ResolveBackend(LinuxBackend? fromArgs, string? fromEnv, LinuxBackend fromConfig)
     {
         if (fromArgs is { } a && a != LinuxBackend.Auto)

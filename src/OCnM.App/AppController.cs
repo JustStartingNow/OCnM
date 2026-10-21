@@ -366,6 +366,11 @@ internal sealed class AppController : IDisposable
         var autostart = _platform.Autostart;
         if (!autostart.IsSupported)
             return;
+        // An entry from the Slotty days would start the old binary; the setting below recreates it under the new name.
+        if (autostart.RemoveLegacyEntry(out var legacyError))
+            Log.Info("Removed the old Slotty start-at-login entry.");
+        else if (legacyError is not null)
+            Log.Warn(legacyError);
         var wanted = _config.Current.Settings.LaunchAtLogin;
         if (autostart.IsEnabled() != wanted && autostart.SetEnabled(wanted) is { } error)
             Log.Warn($"Autostart sync failed: {error}");

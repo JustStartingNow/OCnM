@@ -315,7 +315,7 @@
                 <ComboBoxItem Content="X11 / XWayland" />
                 <ComboBoxItem Content="Native Wayland (experimental)" />
               </ComboBox>
-              <TextBlock Classes="help" Text="Applies after a restart. --backend and SLOTTY_BACKEND override this. Drag and drop on Niri needs native Wayland." />
+              <TextBlock Classes="help" Text="Applies after a restart. --backend and OCNM_BACKEND override this. Drag and drop on Niri needs native Wayland." />
               <SelectableTextBlock Classes="help" Text="{Binding ConfigPath}" FontSize="11" />
             </StackPanel>
           </Grid>

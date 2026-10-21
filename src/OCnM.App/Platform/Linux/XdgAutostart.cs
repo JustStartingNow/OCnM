@@ -3,19 +3,25 @@ using OCnM.Core.Platform;
 
 namespace OCnM.App.Platform.Linux;
 
-/// <summary>~/.config/autostart/slotty.desktop (XDG autostart spec).</summary>
+/// <summary>~/.config/autostart/ocnm.desktop (XDG autostart spec).</summary>
 internal sealed class XdgAutostart : IAutostartService
 {
-    private static string EntryPath
+    private readonly string _autostartDir;
+
+    /// <param name="configHome">Defaults to $XDG_CONFIG_HOME or ~/.config (tests pass a temp folder).</param>
+    public XdgAutostart(string? configHome = null)
     {
-        get
-        {
-            var configHome = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
-            if (string.IsNullOrEmpty(configHome))
-                configHome = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config");
-            return Path.Combine(configHome, "autostart", "slotty.desktop");
-        }
+        if (string.IsNullOrEmpty(configHome))
+            configHome = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
+        if (string.IsNullOrEmpty(configHome))
+            configHome = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config");
+        _autostartDir = Path.Combine(configHome, "autostart");
     }
+
+    public string EntryPath => Path.Combine(_autostartDir, "ocnm.desktop");
+
+    /// <summary>The entry written when the app was called Slotty.</summary>
+    public string LegacyEntryPath => Path.Combine(_autostartDir, "slotty.desktop");
 
     public bool IsSupported => true;
 
@@ -36,7 +42,7 @@ internal sealed class XdgAutostart : IAutostartService
             var entry = new StringBuilder()
                 .AppendLine("[Desktop Entry]")
                 .AppendLine("Type=Application")
-                .AppendLine("Name=Slotty")
+                .AppendLine("Name=OCnM")
                 .AppendLine("Comment=Donut folder launcher and drop target")
                 .AppendLine($"Exec={exec}")
                 .AppendLine("Terminal=false")
@@ -49,6 +55,23 @@ internal sealed class XdgAutostart : IAutostartService
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             return $"Could not update {EntryPath}: {ex.Message}";
+        }
+    }
+
+    public bool RemoveLegacyEntry(out string? error)
+    {
+        error = null;
+        try
+        {
+            if (!File.Exists(LegacyEntryPath))
+                return false;
+            File.Delete(LegacyEntryPath);
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            error = $"Could not remove {LegacyEntryPath}: {ex.Message}";
+            return false;
         }
     }
 

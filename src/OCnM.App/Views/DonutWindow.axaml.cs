@@ -66,14 +66,14 @@ public partial class DonutWindow : Window, IFolderPicker
     /// <summary>Raised for Esc, outside clicks and focus loss. The controller decides whether to hide.</summary>
     public event EventHandler<DismissReason>? DismissRequested;
 
-    /// <summary>When true, a solid rounded background is drawn (no transparency or forced by SLOTTY_SOLID=1).</summary>
+    /// <summary>When true, a solid rounded background is drawn (no transparency or forced by OCNM_SOLID=1).</summary>
     public bool UsesSolidBackground { get; private set; }
 
     public bool HideOnFocusLoss { get; set; } = true;
 
     private void ApplyChrome()
     {
-        var forced = Environment.GetEnvironmentVariable("SLOTTY_SOLID") is "1" or "true";
+        var forced = Core.Config.EnvVars.Read(Core.Config.EnvVars.Solid) is "1" or "true";
         var noTransparency = ActualTransparencyLevel == WindowTransparencyLevel.None;
         UsesSolidBackground = forced || noTransparency;
         if (UsesSolidBackground)

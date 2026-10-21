@@ -28,6 +28,12 @@ public interface IAutostartService
 
     /// <returns>Null on success, otherwise a user-facing error.</returns>
     string? SetEnabled(bool enabled);
+
+    /// <summary>
+    /// Removes the start-at-login entry the app created under its old name (Slotty), which would otherwise keep
+    /// launching the old binary. Returns true if one was removed.
+    /// </summary>
+    bool RemoveLegacyEntry(out string? error);
 }
 
 /// <summary>A system-wide keyboard shortcut. Only Windows and X11 can offer one; Wayland compositors own global keys.</summary>

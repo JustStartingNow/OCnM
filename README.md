@@ -205,6 +205,18 @@ ocnm --toggle
 Quit the running copy (`ocnm --quit`, or *Quit* in the tray), replace the binary with a newly published one, and
 start it again. Settings live in the config file (see below) and are kept.
 
+### Upgrading from Slotty
+
+OCnM used to be called **Slotty**. On its first start, OCnM copies your old settings folder (`~/.config/slotty`,
+`%APPDATA%\Slotty` or `~/Library/Application Support/Slotty`) to the new one, unless the new folder already exists.
+The old folder is left untouched; delete it yourself once you're happy. A *Start at login* entry made by Slotty is
+replaced by an OCnM one. `SLOTTY_*` environment variables are still read when the `OCNM_*` ones are not set.
+
+Things OCnM can't change for you:
+- compositor keybinds and window rules that run `slotty` or match `app-id="slotty"` / `title="Slotty"`
+  (use `ocnm` and `OCnM`; see the [Niri section](#niri))
+- the old binary (`~/.local/bin/slotty`, `slotty.exe`), the Start Menu shortcut and desktop entries named Slotty
+
 ### Develop
 
 ```bash
@@ -394,6 +406,8 @@ A single JSON file:
   status toasts pair an icon with the color.
 
 ## Environment variables
+
+The old `SLOTTY_*` names still work as a fallback.
 
 | Variable | Effect |
 |---|---|

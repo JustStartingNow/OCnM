@@ -45,6 +45,13 @@ internal static class Program
             return 0;
         }
 
+        // Must run before anything writes to the config folder (even a log line), or it would look migrated already.
+        var migration = ConfigMigration.MigrateDefaultLocation();
+        if (migration.Outcome == MigrationOutcome.Migrated)
+            Log.Info($"Settings migrated from the old app name: {migration.Message}");
+        else if (migration.Outcome == MigrationOutcome.Failed)
+            Log.Warn($"Settings migration failed, starting with defaults: {migration.Message}");
+
         // Single instance: hand the command to a running instance if there is one.
         var channel = PlatformServices.CreateInstanceChannel();
         var forwarded = options.Command ?? IpcCommand.Show;
@@ -69,7 +76,7 @@ internal static class Program
             var store = ConfigStore.CreateDefault();
             var load = store.Load();
             var backend = CommandLine.ResolveBackend(options.Backend,
-                Environment.GetEnvironmentVariable(CommandLine.BackendEnvVar), load.Config.Settings.LinuxBackend);
+                EnvVars.Read(EnvVars.Backend), load.Config.Settings.LinuxBackend);
             Startup = new StartupContext(options, channel, sink, store, load, backend);
             Log.Info($"Starting {AppInfo.Name} {Version} (session {SessionDetector.Detect()}, backend request {backend}, config {load.Status})");
 

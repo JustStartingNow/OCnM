@@ -30,6 +30,6 @@ public sealed record AppSettings
     /// <summary>Turns off the donut's open/close and hover animations (also follows the OS setting where detectable).</summary>
     public bool ReduceMotion { get; init; }
 
-    /// <summary>Preferred Linux backend; the --backend flag and SLOTTY_BACKEND override it.</summary>
+    /// <summary>Preferred Linux backend; the --backend flag and OCNM_BACKEND override it.</summary>
     public LinuxBackend LinuxBackend { get; init; } = LinuxBackend.Auto;
 }
