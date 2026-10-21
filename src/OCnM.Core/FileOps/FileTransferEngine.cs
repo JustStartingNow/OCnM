@@ -14,7 +14,7 @@ namespace OCnM.Core.FileOps;
 public sealed class FileTransferEngine
 {
     private const int BufferSize = 1 << 20;
-    private const string PartialSuffix = ".slotty-partial";
+    private const string PartialSuffix = ".ocnm-partial";
     private static readonly TimeSpan ProgressInterval = TimeSpan.FromMilliseconds(50);
 
     private static readonly EnumerationOptions AllEntries = new()
@@ -136,7 +136,7 @@ public sealed class FileTransferEngine
                 case ConflictChoice.Cancel:
                     throw new OperationCanceledException();
                 case ConflictChoice.Replace when canReplace:
-                    backup = Path.Combine(dest, $".{name}.{Token()}.slotty-replaced");
+                    backup = Path.Combine(dest, $".{name}.{Token()}.ocnm-replaced");
                     File.Move(target, backup, overwrite: false);
                     break;
                 default:

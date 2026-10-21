@@ -1,11 +1,11 @@
 namespace OCnM.Core.Ipc;
 
 /// <summary>
-/// One request line per connection: "slotty/1 &lt;command&gt;\n". The server answers "ok\n" or "error &lt;message&gt;\n".
+/// One request line per connection: "ocnm/1 &lt;command&gt;\n". The server answers "ok\n" or "error &lt;message&gt;\n".
 /// </summary>
 public static class IpcProtocol
 {
-    public const string Magic = "slotty/1";
+    public const string Magic = "ocnm/1";
     public const string Ok = "ok";
     public const int MaxLineLength = 256;
 

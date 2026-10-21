@@ -15,7 +15,7 @@ public class InstanceChannelTests : IDisposable
     private IInstanceChannel NewChannel(string name)
     {
         if (OperatingSystem.IsWindows())
-            return new NamedPipeChannel("slotty-test-" + name);
+            return new NamedPipeChannel("ocnm-test-" + name);
         // Short path: Unix socket paths are limited to ~108 bytes.
         return new UnixSocketChannel(Path.Combine(Path.GetTempPath(), $"slt-{name}.sock"));
     }
@@ -92,9 +92,9 @@ public class InstanceChannelTests : IDisposable
 public class XdgAutostartTests
 {
     [Theory]
-    [InlineData("/usr/bin/slotty", "/usr/bin/slotty")]
+    [InlineData("/usr/bin/ocnm", "/usr/bin/ocnm")]
     [InlineData("--hide", "--hide")]
-    [InlineData("/opt/My Apps/slotty", "\"/opt/My Apps/slotty\"")]
+    [InlineData("/opt/My Apps/ocnm", "\"/opt/My Apps/ocnm\"")]
     [InlineData("/opt/a$b", "\"/opt/a\\\\$b\"")]
     [InlineData("/opt/a\\b", "\"/opt/a\\\\\\\\b\"")]
     public void Exec_arguments_are_quoted_per_the_desktop_entry_spec(string arg, string expected)

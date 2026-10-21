@@ -37,7 +37,7 @@ public sealed class PlatformServices : IDisposable
             _xcb = session == SessionKind.LinuxX11 ? XcbConnection.TryOpen() : null;
             Hotkey = _xcb is not null
                 ? new X11Hotkey(_xcb)
-                : new NoHotkey("On Wayland, bind \"slotty --toggle\" to a key in your compositor instead.");
+                : new NoHotkey("On Wayland, bind \"ocnm --toggle\" to a key in your compositor instead.");
             Cursor = _xcb is not null ? new X11Cursor(_xcb) : new NoCursor();
         }
     }

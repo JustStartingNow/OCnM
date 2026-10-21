@@ -81,7 +81,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     public string HotkeyNote => _platform.Hotkey.IsSupported
         ? "Shows the donut at the cursor from anywhere. Example: Ctrl+Alt+Space. Leave empty to disable."
         : _platform.IsWayland
-            ? "Wayland compositors own global shortcuts. Bind \"slotty --toggle\" to a key in your compositor (see README)."
+            ? "Wayland compositors own global shortcuts. Bind \"ocnm --toggle\" to a key in your compositor (see README)."
             : "Global shortcuts are not available on this platform.";
 
     public bool AutostartSupported => _platform.Autostart.IsSupported;

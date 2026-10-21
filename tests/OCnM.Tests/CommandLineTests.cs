@@ -100,10 +100,10 @@ public class IpcProtocolTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("toggle")]
-    [InlineData("slotty/2 toggle")]
-    [InlineData("slotty/1 explode")]
-    [InlineData("slotty/1 toggle extra")]
-    [InlineData("slotty/1 7")]
+    [InlineData("ocnm/2 toggle")]
+    [InlineData("ocnm/1 explode")]
+    [InlineData("ocnm/1 toggle extra")]
+    [InlineData("ocnm/1 7")]
     [InlineData("GET / HTTP/1.1")]
     public void Rejects_garbage(string? line)
     {
@@ -113,7 +113,7 @@ public class IpcProtocolTests
     [Fact]
     public void Rejects_overlong_lines()
     {
-        Assert.False(IpcProtocol.TryDecodeRequest("slotty/1 toggle" + new string(' ', 300), out _));
+        Assert.False(IpcProtocol.TryDecodeRequest("ocnm/1 toggle" + new string(' ', 300), out _));
     }
 
     [Fact]

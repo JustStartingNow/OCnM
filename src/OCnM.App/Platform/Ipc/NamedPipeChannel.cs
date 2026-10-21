@@ -16,7 +16,7 @@ public sealed class NamedPipeChannel(string pipeName) : IInstanceChannel
     {
         var user = $"{Environment.UserDomainName}-{Environment.UserName}";
         var safe = new string(user.Select(c => char.IsLetterOrDigit(c) || c is '-' or '_' ? c : '_').ToArray());
-        return $"Slotty-{safe}";
+        return $"OCnM-{safe}";
     }
 
     public async Task<bool> TrySendAsync(IpcCommand command, TimeSpan timeout, CancellationToken cancellationToken = default)

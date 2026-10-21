@@ -96,7 +96,7 @@ internal static class Program
             .UsePlatformDetect()
             .WithInterFont()
             .With(new Avalonia.Media.FontManagerOptions { DefaultFamilyName = "fonts:Inter#Inter" })
-            .With(new X11PlatformOptions { WmClass = "slotty" })
+            .With(new X11PlatformOptions { WmClass = "ocnm" })
             .LogToTrace();
 
         if (OperatingSystem.IsLinux() && ShouldUseWayland(backend))
@@ -104,7 +104,7 @@ internal static class Program
             // Experimental native backend; falls back to X11/XWayland if no usable compositor answers.
             builder = builder
                 .UseWaylandWithFallback()
-                .With(new WaylandPlatformOptions { AppId = "slotty" });
+                .With(new WaylandPlatformOptions { AppId = "ocnm" });
         }
         return builder;
     }

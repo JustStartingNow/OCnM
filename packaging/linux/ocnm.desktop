@@ -1,10 +1,10 @@
 [Desktop Entry]
 Type=Application
-Name=Slotty
+Name=OCnM
 GenericName=Folder donut
 Comment=Donut menu of nine folders: drop files to copy or move them, click to open
-Exec=slotty --toggle
-Icon=slotty
+Exec=ocnm --toggle
+Icon=ocnm
 Terminal=false
 Categories=Utility;FileTools;
-StartupWMClass=slotty
+StartupWMClass=ocnm

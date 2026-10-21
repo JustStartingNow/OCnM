@@ -20,9 +20,9 @@ public sealed class UnixSocketChannel(string socketPath) : IInstanceChannel
     {
         var runtimeDir = Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR");
         if (!string.IsNullOrEmpty(runtimeDir) && Directory.Exists(runtimeDir))
-            return Path.Combine(runtimeDir, "slotty.sock");
+            return Path.Combine(runtimeDir, "ocnm.sock");
         // Without a private runtime dir, include the user name so users don't collide in /tmp.
-        return Path.Combine(Path.GetTempPath(), $"slotty-{Environment.UserName}.sock");
+        return Path.Combine(Path.GetTempPath(), $"ocnm-{Environment.UserName}.sock");
     }
 
     public async Task<bool> TrySendAsync(IpcCommand command, TimeSpan timeout, CancellationToken cancellationToken = default)
