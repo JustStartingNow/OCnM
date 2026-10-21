@@ -1,11 +1,15 @@
-# Slotty
+# OCnM: Open, Copy 'n' Move
 
-A small desktop app whose whole UI is a **donut with 9 slices**. You give each slice a folder. Then:
+Drop files onto a donut slice to copy or move them into a folder. 9 slices, 9 folders.
 
-- **drop files or folders on a slice** → they are copied (or moved) into that folder, with progress, and an Undo button;
-- **click a slice** (or press **1–9**) → the folder opens in your file manager.
+OCnM (`ocnm`) is a small desktop app whose whole UI is a **donut with 9 slices**. You give each slice a folder. The
+name says what a slice does:
 
-Inspired by the donut UX of [Filee](https://github.com/KnifeLemon/Filee) (MIT). Slotty is original code and does not
+- **Open**: click a slice (or press **1–9**) and its folder opens in your file manager.
+- **Copy**: drop files or folders on a slice and they are copied into its folder, with progress and an Undo button.
+- **Move**: hold **Shift** while dropping, or set a slice's drop action to *Move*, and they are moved instead.
+
+Inspired by the donut UX of [Filee](https://github.com/KnifeLemon/Filee) (MIT). OCnM is original code and does not
 convert files. No network access, no telemetry, no auto-update.
 
 Built with C# / .NET 10 and Avalonia 12.1. Primary targets are Windows 10/11 and Linux on Wayland, with
@@ -24,7 +28,7 @@ Niri as a first-class compositor.
 | Move the window | Drag the center hub (Windows/X11; on Niri use Mod+drag) |
 | Keep it open while dragging | The **pin** button (top-left). Needed on Wayland if you click another window *before* dragging |
 | Hide | **Esc**, click outside the ring, focus loss (when not pinned), or automatically a few seconds after a successful drop |
-| Settings | The sliders button (top-right), `slotty --settings`, or the tray menu |
+| Settings | The sliders button (top-right), `ocnm --settings`, or the tray menu |
 
 Slice 1 starts at 12 o'clock; the rest follow clockwise. A slice whose folder disappeared turns amber with a warning
 icon. Click it or drop a folder on it to re-assign it.
@@ -35,16 +39,16 @@ icon. Click it or drop a folder on it to re-assign it.
   The other policies are *Skip* and *Ask* (Keep both / Replace / Skip / Cancel, optionally for all). *Replace* keeps the
   old file as a hidden backup until the operation can no longer be undone, so Undo can bring it back.
 - A folder can't be dropped into itself or one of its subfolders (symlinks are resolved too).
-- Files are written to a hidden `.name.xxxx.slotty-partial` file first and renamed into place when complete, so an
+- Files are written to a hidden `.name.xxxx.ocnm-partial` file first and renamed into place when complete, so an
   interrupted copy never leaves a truncated file under the real name.
 - **Move** on the same drive is a rename. **Move across drives** is copy → flush → SHA-256 verify → delete the source.
   If any part of a folder fails to copy, nothing is deleted and the incomplete copy is removed.
-- Slotty always reports a *copy* to the drag source, so the file manager never deletes anything itself.
+- OCnM always reports a *copy* to the drag source, so the file manager never deletes anything itself.
 - Undo keeps files you edited after the drop and reports them instead of deleting them.
 
 ## Install
 
-Slotty has no download page or installer yet. You build a self-contained binary once with the .NET SDK. It includes
+OCnM has no download page or installer yet. You build a self-contained binary once with the .NET SDK. It includes
 the .NET runtime, so the machine that *runs* it needs nothing else. You can build every platform's binary from any
 OS; for example, build the Windows `.exe` on Linux and copy it over.
 
@@ -63,17 +67,17 @@ Install the **.NET 10 SDK**:
 Then, in the project folder, publish for the target you need:
 
 ```bash
-dotnet publish src/Slotty.App -c Release -r <RID> --self-contained -p:PublishSingleFile=true -o publish/<RID>
+dotnet publish src/OCnM.App -c Release -r <RID> --self-contained -p:PublishSingleFile=true -o publish/<RID>
 ```
 
 | Target | `<RID>` | Output |
 |---|---|---|
-| Linux, Intel/AMD | `linux-x64` | `publish/linux-x64/slotty` |
-| Linux, ARM | `linux-arm64` | `publish/linux-arm64/slotty` |
-| Windows, Intel/AMD | `win-x64` | `publish/win-x64/slotty.exe` |
-| Windows, ARM | `win-arm64` | `publish/win-arm64/slotty.exe` |
-| macOS, Apple Silicon | `osx-arm64` | `publish/osx-arm64/slotty` |
-| macOS, Intel | `osx-x64` | `publish/osx-x64/slotty` |
+| Linux, Intel/AMD | `linux-x64` | `publish/linux-x64/ocnm` |
+| Linux, ARM | `linux-arm64` | `publish/linux-arm64/ocnm` |
+| Windows, Intel/AMD | `win-x64` | `publish/win-x64/ocnm.exe` |
+| Windows, ARM | `win-arm64` | `publish/win-arm64/ocnm.exe` |
+| macOS, Apple Silicon | `osx-arm64` | `publish/osx-arm64/ocnm` |
+| macOS, Intel | `osx-x64` | `publish/osx-x64/ocnm` |
 
 Each binary is a single file of about 50 MB. All six targets build. Only `linux-x64` has been run so far
 (see *Platform support*).
@@ -83,17 +87,17 @@ Each binary is a single file of about 50 MB. All six targets build. Only `linux-
 **1. Install for your user** (no root needed):
 
 ```bash
-install -Dm755 publish/linux-x64/slotty ~/.local/bin/slotty
-install -Dm644 packaging/linux/slotty.desktop ~/.local/share/applications/slotty.desktop
-install -Dm644 packaging/slotty.svg ~/.local/share/icons/hicolor/scalable/apps/slotty.svg
+install -Dm755 publish/linux-x64/ocnm ~/.local/bin/ocnm
+install -Dm644 packaging/linux/ocnm.desktop ~/.local/share/applications/ocnm.desktop
+install -Dm644 packaging/ocnm.svg ~/.local/share/icons/hicolor/scalable/apps/ocnm.svg
 update-desktop-database ~/.local/share/applications 2>/dev/null || true
 ```
 
-`~/.local/bin` must be on your `PATH`. Check with `which slotty`. If it isn't:
+`~/.local/bin` must be on your `PATH`. Check with `which ocnm`. If it isn't:
 - fish: `fish_add_path ~/.local/bin`
 - bash/zsh: add `export PATH="$HOME/.local/bin:$PATH"` to `~/.bashrc` / `~/.zshrc`
 
-Slotty then appears in your app launcher as **Slotty**.
+OCnM then appears in your app launcher as **OCnM**.
 
 **2. Runtime requirements.** Normally all of these are already installed on a desktop:
 - `xdg-utils` (`xdg-open`, used to open folders in your file manager)
@@ -105,11 +109,11 @@ Slotty then appears in your app launcher as **Slotty**.
 
 | Desktop | How |
 |---|---|
-| **Niri** | Add the keybind and window rule from the [Niri section](#niri) (`spawn "slotty" "--toggle"`) |
-| **Hyprland** | `bind = SUPER ALT, S, exec, slotty --toggle` and `windowrulev2 = float, class:^(slotty)$` |
-| **Sway** | `bindsym $mod+Alt+s exec slotty --toggle` and `for_window [app_id="slotty"] floating enable` |
-| **KDE Plasma (Wayland)** | System Settings → Keyboard → Shortcuts → *Add New* → *Command or Script* → `slotty --toggle` |
-| **GNOME (Wayland)** | Settings → Keyboard → View and Customize Shortcuts → Custom Shortcuts → `slotty --toggle` |
+| **Niri** | Add the keybind and window rule from the [Niri section](#niri) (`spawn "ocnm" "--toggle"`) |
+| **Hyprland** | `bind = SUPER ALT, S, exec, ocnm --toggle` and `windowrulev2 = float, class:^(ocnm)$` |
+| **Sway** | `bindsym $mod+Alt+s exec ocnm --toggle` and `for_window [app_id="ocnm"] floating enable` |
+| **KDE Plasma (Wayland)** | System Settings → Keyboard → Shortcuts → *Add New* → *Command or Script* → `ocnm --toggle` |
+| **GNOME (Wayland)** | Settings → Keyboard → View and Customize Shortcuts → Custom Shortcuts → `ocnm --toggle` |
 | **Any X11 session** | Nothing to do: the built-in global hotkey **Ctrl+Alt+Space** works, and so does the tray icon |
 
 The compositor snippets show the usual syntax. Window-rule syntax in particular changes between versions, so check
@@ -117,57 +121,57 @@ your compositor's wiki. On Wayland, check first that the key isn't already bound
 binds `Super+Alt+S` to the Orca screen reader.
 
 **4. Start at login.** Pick one:
-- Niri: `spawn-at-startup "slotty" "--hide"` in `config.kdl`
-- Hyprland: `exec-once = slotty --hide`. Sway: `exec slotty --hide`
-- KDE / GNOME / XFCE: tick **Settings → Start at login** in Slotty. This writes `~/.config/autostart/slotty.desktop`.
+- Niri: `spawn-at-startup "ocnm" "--hide"` in `config.kdl`
+- Hyprland: `exec-once = ocnm --hide`. Sway: `exec ocnm --hide`
+- KDE / GNOME / XFCE: tick **Settings → Start at login** in OCnM. This writes `~/.config/autostart/ocnm.desktop`.
 
-Avoid starting `slotty` from a terminal you later close, because closing the terminal ends Slotty. Use the keybind or
+Avoid starting `ocnm` from a terminal you later close, because closing the terminal ends OCnM. Use the keybind or
 the launcher instead.
 
 **Uninstall:**
 
 ```bash
-slotty --quit
-rm ~/.local/bin/slotty ~/.local/share/applications/slotty.desktop \
-   ~/.local/share/icons/hicolor/scalable/apps/slotty.svg ~/.config/autostart/slotty.desktop
-rm -r ~/.config/slotty        # settings and log (optional)
+ocnm --quit
+rm ~/.local/bin/ocnm ~/.local/share/applications/ocnm.desktop \
+   ~/.local/share/icons/hicolor/scalable/apps/ocnm.svg ~/.config/autostart/ocnm.desktop
+rm -r ~/.config/ocnm        # settings and log (optional)
 ```
 
 Also remove any keybind / `spawn-at-startup` lines you added to your compositor config.
 
 ### Windows 10 / 11
 
-**1. Install for your user.** Run in PowerShell from the project folder, or copy `slotty.exe` from a Linux build first:
+**1. Install for your user.** Run in PowerShell from the project folder, or copy `ocnm.exe` from a Linux build first:
 
 ```powershell
-$dir = "$env:LOCALAPPDATA\Programs\Slotty"
+$dir = "$env:LOCALAPPDATA\Programs\OCnM"
 New-Item -ItemType Directory -Force $dir | Out-Null
-Copy-Item .\publish\win-x64\slotty.exe $dir
+Copy-Item .\publish\win-x64\ocnm.exe $dir
 
 # Start Menu shortcut
-$lnk = (New-Object -ComObject WScript.Shell).CreateShortcut("$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Slotty.lnk")
-$lnk.TargetPath = "$dir\slotty.exe"
+$lnk = (New-Object -ComObject WScript.Shell).CreateShortcut("$env:APPDATA\Microsoft\Windows\Start Menu\Programs\OCnM.lnk")
+$lnk.TargetPath = "$dir\ocnm.exe"
 $lnk.Save()
 
-# Optional: make `slotty --toggle` etc. work in any terminal (open a new terminal afterwards)
+# Optional: make `ocnm --toggle` etc. work in any terminal (open a new terminal afterwards)
 [Environment]::SetEnvironmentVariable("Path", [Environment]::GetEnvironmentVariable("Path", "User") + ";$dir", "User")
 ```
 
-**2. First start.** Open **Slotty** from the Start Menu. The binary isn't code-signed, so SmartScreen may say *"Windows
+**2. First start.** Open **OCnM** from the Start Menu. The binary isn't code-signed, so SmartScreen may say *"Windows
 protected your PC"*. Click **More info → Run anyway**. You only need to do this once.
 
 **3. Use it.**
 - **Ctrl+Alt+Space** (change it in Settings) shows the donut at the mouse cursor.
 - The **tray icon**: left-click toggles the donut. Right-click gives *Settings*, *Start at login* and *Quit*. Windows
   may hide new tray icons under the **^** arrow; drag it onto the taskbar to keep it visible.
-- **Start at login**: tick it in the tray menu or in Settings. This adds `HKCU\…\CurrentVersion\Run\Slotty`.
+- **Start at login**: tick it in the tray menu or in Settings. This adds `HKCU\…\CurrentVersion\Run\OCnM`.
 
 **Uninstall:** untick *Start at login*, then *Quit* from the tray. Then:
 
 ```powershell
-Remove-Item -Recurse "$env:LOCALAPPDATA\Programs\Slotty"
-Remove-Item "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Slotty.lnk"
-Remove-Item -Recurse "$env:APPDATA\Slotty"        # settings and log (optional)
+Remove-Item -Recurse "$env:LOCALAPPDATA\Programs\OCnM"
+Remove-Item "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\OCnM.lnk"
+Remove-Item -Recurse "$env:APPDATA\OCnM"        # settings and log (optional)
 ```
 
 If you added the folder to `Path`, remove it under *Settings → System → About → Advanced system settings →
@@ -175,30 +179,30 @@ Environment Variables*.
 
 ### macOS (best effort, not tested yet)
 
-There is no `.app` bundle yet; Slotty runs as a command-line-launched binary.
+There is no `.app` bundle yet; OCnM runs as a command-line-launched binary.
 
 ```bash
 # Apple Silicon: osx-arm64 · Intel: osx-x64
-dotnet publish src/Slotty.App -c Release -r osx-arm64 --self-contained -p:PublishSingleFile=true -o publish/osx-arm64
+dotnet publish src/OCnM.App -c Release -r osx-arm64 --self-contained -p:PublishSingleFile=true -o publish/osx-arm64
 
-sudo install -m755 publish/osx-arm64/slotty /usr/local/bin/slotty
+sudo install -m755 publish/osx-arm64/ocnm /usr/local/bin/ocnm
 # A binary built on another machine is unsigned: sign it ad hoc and clear the quarantine flag.
-sudo codesign --force --sign - /usr/local/bin/slotty
-sudo xattr -d com.apple.quarantine /usr/local/bin/slotty 2>/dev/null || true
+sudo codesign --force --sign - /usr/local/bin/ocnm
+sudo xattr -d com.apple.quarantine /usr/local/bin/ocnm 2>/dev/null || true
 
-slotty --hide &      # starts in the background; then:
-slotty --toggle
+ocnm --hide &      # starts in the background; then:
+ocnm --toggle
 ```
 
-- To get a global key, bind `slotty --toggle` with a launcher (Raycast, Alfred, Hammerspoon, BetterTouchTool).
-  Slotty's own global hotkey is not implemented on macOS.
-- **Start at login** in Settings writes `~/Library/LaunchAgents/app.slotty.plist`.
-- To uninstall: `slotty --quit`, then remove `/usr/local/bin/slotty`, `~/Library/LaunchAgents/app.slotty.plist` and
-  `~/Library/Application Support/Slotty`.
+- To get a global key, bind `ocnm --toggle` with a launcher (Raycast, Alfred, Hammerspoon, BetterTouchTool).
+  OCnM's own global hotkey is not implemented on macOS.
+- **Start at login** in Settings writes `~/Library/LaunchAgents/app.ocnm.plist`.
+- To uninstall: `ocnm --quit`, then remove `/usr/local/bin/ocnm`, `~/Library/LaunchAgents/app.ocnm.plist` and
+  `~/Library/Application Support/OCnM`.
 
 ### Updating
 
-Quit the running copy (`slotty --quit`, or *Quit* in the tray), replace the binary with a newly published one, and
+Quit the running copy (`ocnm --quit`, or *Quit* in the tray), replace the binary with a newly published one, and
 start it again. Settings live in the config file (see below) and are kept.
 
 ### Develop
@@ -206,25 +210,25 @@ start it again. Settings live in the config file (see below) and are kept.
 ```bash
 dotnet build            # warnings are errors (Directory.Build.props)
 dotnet test
-dotnet run --project src/Slotty.App
+dotnet run --project src/OCnM.App
 ```
 
 The project file turns on native-library self-extraction, compression and no symbols for single-file publishes.
 
 ## Command line
 
-Slotty is single-instance. A second launch forwards its command to the running instance over a Unix domain socket
-(`$XDG_RUNTIME_DIR/slotty.sock`, mode 0600) or a per-user named pipe on Windows, then exits. If nothing is running,
+OCnM is single-instance. A second launch forwards its command to the running instance over a Unix domain socket
+(`$XDG_RUNTIME_DIR/ocnm.sock`, mode 0600) or a per-user named pipe on Windows, then exits. If nothing is running,
 the first launch starts the app.
 
 ```
-slotty               start (or show the running donut)
-slotty --toggle      show / hide the donut
-slotty --show
-slotty --hide        (when starting: start hidden)
-slotty --settings
-slotty --quit
-slotty --backend x11|wayland     Linux backend for this start (also SLOTTY_BACKEND=…)
+ocnm               start (or show the running donut)
+ocnm --toggle      show / hide the donut
+ocnm --show
+ocnm --hide        (when starting: start hidden)
+ocnm --settings
+ocnm --quit
+ocnm --backend x11|wayland     Linux backend for this start (also OCNM_BACKEND=…)
 ```
 
 Exit codes: 0 = OK, 1 = an instance exists but isn't answering, 2 = bad arguments.
@@ -236,10 +240,10 @@ Exit codes: 0 = OK, 1 = an instance exists but isn't answering, 2 = bad argument
 | Donut, assign, drop copy/move, undo | ✔ | ✔ | ✔ | best effort |
 | Transparent borderless window | ✔ | ✔ (solid fallback if not granted) | ✔ with a compositor | best effort |
 | Open at cursor | ✔ (tray + hotkey) | ✘ by design: the compositor places it | ✔ | centered |
-| Global hotkey (default Ctrl+Alt+Space) | ✔ `RegisterHotKey` | ✘ use a compositor keybind → `slotty --toggle` | ✔ `XGrabKey` (XCB) | ✘ |
+| Global hotkey (default Ctrl+Alt+Space) | ✔ `RegisterHotKey` | ✘ use a compositor keybind → `ocnm --toggle` | ✔ `XGrabKey` (XCB) | ✘ |
 | Tray icon | ✔ | ✔ if a StatusNotifierItem host runs | ✔ if a tray host runs | best effort |
 | Always on top | ✔ | ✘ (use a window rule) | ✔ | best effort |
-| Start at login | ✔ HKCU `Run` key | `~/.config/autostart/slotty.desktop` (see Niri note) | same | LaunchAgent |
+| Start at login | ✔ HKCU `Run` key | `~/.config/autostart/ocnm.desktop` (see Niri note) | same | LaunchAgent |
 | Single instance / CLI | ✔ named pipe | ✔ Unix socket | ✔ Unix socket | ✔ Unix socket |
 
 **What was tested.** Everything Linux/Wayland was exercised on CachyOS + Niri 26.04 with Dolphin: both backends,
@@ -252,15 +256,15 @@ Windows** yet. The same goes for the X11-session hotkey and cursor placement, an
 ## Linux backends: native Wayland vs X11
 
 Avalonia 12.1 ships an experimental native Wayland backend (`Avalonia.Wayland`). It isn't selected automatically, so
-Slotty selects it itself:
+OCnM selects it itself:
 
 | Setting | Backend |
 |---|---|
-| `--backend wayland`, `SLOTTY_BACKEND=wayland`, or Settings → Linux backend → Native Wayland | native Wayland (falls back to X11 if no compositor answers) |
-| `--backend x11` / `SLOTTY_BACKEND=x11` / Settings → X11 | X11 (XWayland on a Wayland desktop) |
+| `--backend wayland`, `OCNM_BACKEND=wayland`, or Settings → Linux backend → Native Wayland | native Wayland (falls back to X11 if no compositor answers) |
+| `--backend x11` / `OCNM_BACKEND=x11` / Settings → X11 | X11 (XWayland on a Wayland desktop) |
 | Automatic (default) | native Wayland inside a Wayland session, X11 otherwise |
 
-Precedence: `--backend` > `SLOTTY_BACKEND` > Settings. Both backends set the app id / WM class to `slotty`.
+Precedence: `--backend` > `OCNM_BACKEND` > Settings. Both backends set the app id / WM class to `ocnm`.
 
 **Which works better for drag-and-drop on Niri?** The **native Wayland backend**. Tested on Niri 26.04 + xwayland-satellite,
 dragging a file from Dolphin:
@@ -276,24 +280,24 @@ compositor, or with an X11 file manager.
 ## Niri
 
 On Wayland a client can't read the global cursor, place its own windows, grab global keys or stay on top. On Niri,
-Slotty is therefore a normal **fixed-size floating window** (440×500) with app id `slotty`, placed by the compositor and
-opened with a keybind that runs `slotty --toggle`.
+OCnM is therefore a normal **fixed-size floating window** (440×500) with app id `ocnm`, placed by the compositor and
+opened with a keybind that runs `ocnm --toggle`.
 
 Add to `~/.config/niri/config.kdl`. This snippet was checked with `niri validate` on Niri 26.04; **check the
 [Niri wiki](https://github.com/YaLTeR/niri/wiki) for the exact syntax of your Niri version**:
 
 ```kdl
-// Start Slotty hidden at login (XDG autostart is not run by every Niri setup).
-spawn-at-startup "slotty" "--hide"
+// Start OCnM hidden at login (XDG autostart is not run by every Niri setup).
+spawn-at-startup "ocnm" "--hide"
 
 binds {
     // Pick any free key; Mod+S is just an example.
-    Mod+S hotkey-overlay-title="Slotty donut" { spawn "slotty" "--toggle"; }
+    Mod+S hotkey-overlay-title="OCnM donut" { spawn "ocnm" "--toggle"; }
 }
 
 // The donut: floating, focused, no border, focus ring or shadow, top-center of the screen.
 window-rule {
-    match app-id="^slotty$" title="^Slotty$"
+    match app-id="^ocnm$" title="^OCnM$"
     open-floating true
     open-focused true
     default-floating-position x=0 y=120 relative-to="top"
@@ -305,7 +309,7 @@ window-rule {
 
 // Optional: Settings as a floating window too.
 window-rule {
-    match app-id="^slotty$" title="^Slotty Settings$"
+    match app-id="^ocnm$" title="^OCnM Settings$"
     open-floating true
     default-column-width { fixed 980; }
 }
@@ -324,7 +328,7 @@ and shadow around the transparent window and sets a position.
 Other Niri notes:
 - The global-hotkey setting is disabled on Wayland. Use the keybind above.
 - The tray icon appears if your bar hosts StatusNotifierItems (Waybar, Noctalia, …). The tray is never required.
-- To start at login, prefer `spawn-at-startup`. Slotty's *Start at login* checkbox writes an XDG autostart entry,
+- To start at login, prefer `spawn-at-startup`. OCnM's *Start at login* checkbox writes an XDG autostart entry,
   which only runs if your session runs the systemd XDG autostart generator.
 
 ## Windows
@@ -341,11 +345,11 @@ A single JSON file:
 
 | OS | Path |
 |---|---|
-| Linux | `$XDG_CONFIG_HOME/slotty/config.json` (usually `~/.config/slotty/config.json`) |
-| Windows | `%APPDATA%\Slotty\config.json` |
-| macOS | `~/Library/Application Support/Slotty/config.json` |
+| Linux | `$XDG_CONFIG_HOME/ocnm/config.json` (usually `~/.config/ocnm/config.json`) |
+| Windows | `%APPDATA%\OCnM\config.json` |
+| macOS | `~/Library/Application Support/OCnM/config.json` |
 
-`SLOTTY_CONFIG_DIR` overrides the directory. A small log (`slotty.log`, rotated at 512 KB) sits next to it.
+`OCNM_CONFIG_DIR` overrides the directory. A small log (`ocnm.log`, rotated at 512 KB) sits next to it.
 
 ```json
 {
@@ -382,7 +386,7 @@ A single JSON file:
 
 - The donut opens with a short scale-and-fade (190 ms, decelerating) and closes faster (120 ms). Hover, drag and focus
   highlights blend over 120 ms. The slice under a drag lifts outwards and the hub shows *Copy to* / *Move to* with the path.
-- **Reduce animations** (Settings → Accessibility, `"reduceMotion": true`) makes every change instant. Slotty also follows
+- **Reduce animations** (Settings → Accessibility, `"reduceMotion": true`) makes every change instant. OCnM also follows
   the OS setting where it can read it: Windows "Show animations", KDE `AnimationDurationFactor=0`, GNOME
   `enable-animations=false`.
 - Text uses the bundled Inter font, so it looks the same on every platform. Colors are semantic theme tokens
@@ -393,17 +397,17 @@ A single JSON file:
 
 | Variable | Effect |
 |---|---|
-| `SLOTTY_BACKEND` | `x11` or `wayland` (Linux) |
-| `SLOTTY_CONFIG_DIR` | Use another config directory |
-| `SLOTTY_SOLID=1` | Force the solid rounded background instead of transparency |
+| `OCNM_BACKEND` | `x11` or `wayland` (Linux) |
+| `OCNM_CONFIG_DIR` | Use another config directory |
+| `OCNM_SOLID=1` | Force the solid rounded background instead of transparency |
 
 ## Project layout
 
 ```
-Slotty.sln
-src/Slotty.Core/    models, config store, transfer engine + undo, donut geometry, CLI/IPC contracts, platform interfaces
-src/Slotty.App/     Avalonia app: DonutMenu control, windows, view models, per-OS platform implementations
-tests/Slotty.Tests/ xUnit: hit-testing, config, conflicts, copy/move/undo, nesting, IPC, hotkey parsing, …
+OCnM.sln
+src/OCnM.Core/    models, config store, transfer engine + undo, donut geometry, CLI/IPC contracts, platform interfaces
+src/OCnM.App/     Avalonia app: DonutMenu control, windows, view models, per-OS platform implementations
+tests/OCnM.Tests/ xUnit: hit-testing, config, conflicts, copy/move/undo, nesting, IPC, hotkey parsing, …
 packaging/          .desktop file and SVG icon
 docs/ARCHITECTURE.md
 ```
@@ -412,11 +416,11 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how the pieces fit together
 
 ## Troubleshooting
 
-- **Nothing happens on `slotty --toggle`.** Check `~/.config/slotty/slotty.log`. A stale socket from a crash is
+- **Nothing happens on `ocnm --toggle`.** Check `~/.config/ocnm/ocnm.log`. A stale socket from a crash is
   replaced automatically on the next start.
 - **The donut has a border or shadow on Niri.** Add the window rule above.
-- **Black corners instead of transparency.** The compositor didn't grant a transparent surface. Slotty switches to a solid
-  rounded background on its own; `SLOTTY_SOLID=1` forces it.
+- **Black corners instead of transparency.** The compositor didn't grant a transparent surface. OCnM switches to a solid
+  rounded background on its own; `OCNM_SOLID=1` forces it.
 - **Drops don't arrive on Linux.** Make sure the native Wayland backend is in use (Settings shows the backend in the
   footer), or start with `--backend wayland`.
 

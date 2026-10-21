@@ -20,7 +20,7 @@ public enum ConflictChoice
     Cancel,
 }
 
-/// <param name="CanReplace">False for folders: Slotty never merges or replaces folders.</param>
+/// <param name="CanReplace">False for folders: OCnM never merges or replaces folders.</param>
 public sealed record ConflictQuestion(string SourcePath, string ExistingPath, bool CanReplace);
 
 public readonly record struct ConflictAnswer(ConflictChoice Choice, bool ApplyToAll = false);
@@ -72,7 +72,7 @@ public sealed class TransferResult
 
 public abstract record UndoEntry;
 
-/// <summary>A file or symlink that Slotty created. Length/LastWriteUtc detect later edits (null = don't check).</summary>
+/// <summary>A file or symlink that OCnM created. Length/LastWriteUtc detect later edits (null = don't check).</summary>
 public sealed record CreatedFileEntry(string Path, long? Length, DateTime? LastWriteUtc) : UndoEntry;
 
 public sealed record CreatedDirectoryEntry(string Path) : UndoEntry;

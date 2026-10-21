@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OCnM.App.Controls;
 using OCnM.App.Services;
+using OCnM.Core;
 using OCnM.Core.FileOps;
 using OCnM.Core.Models;
 using OCnM.Core.Platform;
@@ -28,7 +29,7 @@ public sealed partial class DonutViewModel : ObservableObject
     private int _activeTransfers;
 
     [ObservableProperty]
-    private string _idleTitle = "Slotty";
+    private string _idleTitle = AppInfo.Name;
 
     [ObservableProperty]
     private string? _idleSubtitle;
@@ -88,7 +89,7 @@ public sealed partial class DonutViewModel : ObservableObject
         }
         else
         {
-            IdleTitle = "Slotty";
+            IdleTitle = AppInfo.Name;
             IdleSubtitle = (config.Settings.DefaultAction == DropAction.Move ? "Drop files to move" : "Drop files to copy") + "\nPress 1–9 to open";
         }
     }

@@ -474,7 +474,7 @@ public sealed class DonutMenu : Control
         _focusVisible = false;
         var hit = HitTestPoint(e.GetPosition(this));
         var index = hit.IsSlice && e.DataTransfer.Contains(DataFormat.File) ? hit.SliceIndex : -1;
-        // Always report Copy: the source app must never delete its files. Moves are done by Slotty itself.
+        // Always report Copy: the source app must never delete its files. Moves are done by OCnM itself.
         e.DragEffects = index >= 0 ? DragDropEffects.Copy : DragDropEffects.None;
         _dragIndex = index;
         StartAnimation();

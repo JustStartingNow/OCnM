@@ -22,7 +22,10 @@ public static class CommandLine
     public const string BackendEnvVar = "SLOTTY_BACKEND";
 
     public const string HelpText = """
-        Usage: slotty [command] [--backend x11|wayland]
+        OCnM: Open, Copy 'n' Move
+        Drop files onto a donut slice to copy or move them into a folder. 9 slices, 9 folders.
+
+        Usage: ocnm [command] [--backend x11|wayland]
 
         Commands (sent to the running instance; the first launch starts it):
           --toggle      Show the donut, or hide it if it is visible
@@ -83,7 +86,7 @@ public static class CommandLine
                 continue;
             }
 
-            return Fail($"Unknown argument \"{arg}\". Run slotty --help for usage.");
+            return Fail($"Unknown argument \"{arg}\". Run ocnm --help for usage.");
         }
 
         return new CommandLineOptions { Command = command, Backend = backend, ShowHelp = help, ShowVersion = version };

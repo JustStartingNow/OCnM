@@ -4,7 +4,7 @@
         xmlns:vm="using:OCnM.App.ViewModels"
         x:Class="OCnM.App.Views.SettingsWindow"
         x:DataType="vm:SettingsViewModel"
-        Title="Slotty Settings"
+        Title="OCnM Settings"
         Width="1000" Height="760" MinWidth="780" MinHeight="540"
         Background="{DynamicResource OCnMWindowBg}"
         WindowStartupLocation="CenterScreen">
@@ -108,6 +108,7 @@
         <!-- Header -->
         <StackPanel Spacing="4">
           <TextBlock Classes="h1" Text="Settings" />
+          <TextBlock Classes="label" Margin="0" Text="{Binding AppTitle}" />
           <TextBlock Classes="help" Text="Give each slice a folder, then drop files on it to copy or move them. Changes apply when you press Save." />
         </StackPanel>
 
@@ -292,7 +293,7 @@
 
             <TextBlock Grid.Row="5" Classes="label" Text="Start at login" />
             <CheckBox Grid.Row="5" Grid.Column="1" IsChecked="{Binding LaunchAtLogin}" IsEnabled="{Binding AutostartSupported}"
-                      Content="Start Slotty hidden when I log in" />
+                      Content="Start OCnM hidden when I log in" />
           </Grid>
         </Border>
 
@@ -304,7 +305,7 @@
             <TextBlock Grid.Row="1" Classes="label" Text="Animations" />
             <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4">
               <CheckBox IsChecked="{Binding ReduceMotion}" Content="Reduce animations" />
-              <TextBlock Classes="help" Text="Shows and hides the donut instantly. Also follows the system setting where Slotty can read it (Windows, KDE, GNOME)." />
+              <TextBlock Classes="help" Text="Shows and hides the donut instantly. Also follows the system setting where OCnM can read it (Windows, KDE, GNOME)." />
             </StackPanel>
 
             <TextBlock Grid.Row="2" Classes="label" Text="Linux backend" IsVisible="{Binding IsLinux}" />

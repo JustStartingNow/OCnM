@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using OCnM.Core;
 using OCnM.Core.Platform;
 
 namespace OCnM.App.Platform;
@@ -25,7 +26,7 @@ public sealed class AvaloniaTray : ITrayService
             IsVisible = autostartSupported,
         };
         _autostartItem.Click += (_, _) => AutostartToggled?.Invoke(this, !_autostartItem.IsChecked);
-        var quit = new NativeMenuItem("Quit Slotty");
+        var quit = new NativeMenuItem($"Quit {AppInfo.Name}");
         quit.Click += (_, _) => QuitRequested?.Invoke(this, EventArgs.Empty);
 
         var menu = new NativeMenu();
@@ -35,7 +36,7 @@ public sealed class AvaloniaTray : ITrayService
         menu.Add(new NativeMenuItemSeparator());
         menu.Add(quit);
 
-        _icon = new TrayIcon { Icon = icon, ToolTipText = "Slotty", Menu = menu, IsVisible = false };
+        _icon = new TrayIcon { Icon = icon, ToolTipText = AppInfo.Name, Menu = menu, IsVisible = false };
         _icon.Clicked += (_, _) => ToggleRequested?.Invoke(this, EventArgs.Empty);
         TrayIcon.SetIcons(app, [_icon]);
     }

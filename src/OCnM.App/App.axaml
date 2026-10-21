@@ -1,7 +1,7 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="OCnM.App.App"
-             Name="Slotty"
+             Name="OCnM"
              RequestedThemeVariant="Default">
   <Application.Resources>
     <ResourceDictionary>
@@ -42,7 +42,7 @@
   </Application.Resources>
   <Application.Styles>
     <FluentTheme>
-      <!-- Fluent's own accent (checkboxes, accent buttons, focus) follows Slotty's accent. -->
+      <!-- Fluent's own accent (checkboxes, accent buttons, focus) follows OCnM's accent. -->
       <FluentTheme.Palettes>
         <ColorPaletteResources x:Key="Light" Accent="#5254D0" RegionColor="#F4F4F8" />
         <ColorPaletteResources x:Key="Dark" Accent="#7B7BEA" RegionColor="#16161D" />

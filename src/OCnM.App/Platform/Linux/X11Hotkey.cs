@@ -54,7 +54,7 @@ internal sealed unsafe class X11Hotkey(XcbConnection connection) : IGlobalHotkey
         _stop = false;
         var wanted = mods;
         var codes = keycodes.ToHashSet();
-        _thread = new Thread(() => EventLoop(codes, wanted)) { IsBackground = true, Name = "Slotty X11 hotkey" };
+        _thread = new Thread(() => EventLoop(codes, wanted)) { IsBackground = true, Name = "OCnM X11 hotkey" };
         _thread.Start();
         return null;
     }

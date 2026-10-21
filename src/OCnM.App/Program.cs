@@ -1,6 +1,7 @@
 using Avalonia;
 using OCnM.App.Platform;
 using OCnM.App.Services;
+using OCnM.Core;
 using OCnM.Core.Config;
 using OCnM.Core.Ipc;
 using OCnM.Core.Models;
@@ -40,7 +41,7 @@ internal static class Program
         }
         if (options.ShowVersion)
         {
-            ConsoleOutput.Write($"slotty {Version}");
+            ConsoleOutput.Write($"{AppInfo.FullName} {Version}");
             return 0;
         }
 
@@ -59,7 +60,7 @@ internal static class Program
             Thread.Sleep(500);
             if (channel.TrySendAsync(forwarded, TimeSpan.FromSeconds(2)).GetAwaiter().GetResult())
                 return 0;
-            ConsoleOutput.Write("Another Slotty instance is running but not answering.", isError: true);
+            ConsoleOutput.Write($"Another {AppInfo.Name} instance is running but not answering.", isError: true);
             return 1;
         }
 
@@ -70,7 +71,7 @@ internal static class Program
             var backend = CommandLine.ResolveBackend(options.Backend,
                 Environment.GetEnvironmentVariable(CommandLine.BackendEnvVar), load.Config.Settings.LinuxBackend);
             Startup = new StartupContext(options, channel, sink, store, load, backend);
-            Log.Info($"Starting Slotty {Version} (session {SessionDetector.Detect()}, backend request {backend}, config {load.Status})");
+            Log.Info($"Starting {AppInfo.Name} {Version} (session {SessionDetector.Detect()}, backend request {backend}, config {load.Status})");
 
             BuildAvaloniaApp(backend).StartWithClassicDesktopLifetime(args, Avalonia.Controls.ShutdownMode.OnExplicitShutdown);
             return 0;
@@ -78,7 +79,7 @@ internal static class Program
         catch (Exception ex)
         {
             Log.Error("Fatal error", ex);
-            ConsoleOutput.Write($"Slotty crashed: {ex.Message}", isError: true);
+            ConsoleOutput.Write($"{AppInfo.Name} crashed: {ex.Message}", isError: true);
             return 1;
         }
         finally

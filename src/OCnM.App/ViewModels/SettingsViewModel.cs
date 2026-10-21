@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using OCnM.App.Controls;
 using OCnM.App.Platform;
 using OCnM.App.Services;
+using OCnM.Core;
 using OCnM.Core.Config;
 using OCnM.Core.Models;
 using OCnM.Core.Platform;
@@ -89,9 +90,11 @@ public sealed partial class SettingsViewModel : ObservableObject
     public bool IsLinux => OperatingSystem.IsLinux();
 
     public string EnvironmentInfo =>
-        $"Session: {_platform.Session}   ·   Backend: {_backendName()}   ·   Version {Program.Version}";
+        $"{AppInfo.FullName} {Program.Version}   ·   Session: {_platform.Session}   ·   Backend: {_backendName()}";
 
     public string ConfigPath => AppPaths.ConfigFile;
+
+    public string AppTitle => $"{AppInfo.FullName} · version {Program.Version}";
 
     public void RefreshEnvironmentInfo() => OnPropertyChanged(nameof(EnvironmentInfo));
 

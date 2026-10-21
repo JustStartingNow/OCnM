@@ -8,6 +8,6 @@
     <AnalysisLevel>latest</AnalysisLevel>
     <Deterministic>true</Deterministic>
     <Version>1.0.0</Version>
-    <Authors>Slotty contributors</Authors>
+    <Authors>OCnM contributors</Authors>
   </PropertyGroup>
 </Project>

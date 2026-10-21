@@ -55,7 +55,7 @@ public sealed class Win32Hotkey : IGlobalHotkeyService
             }
             Win32Native.UnregisterHotKey(0, HotkeyId);
         })
-        { IsBackground = true, Name = "Slotty hotkey" };
+        { IsBackground = true, Name = "OCnM hotkey" };
         _thread.Start();
         ready.Wait(TimeSpan.FromSeconds(5));
         if (error is not null)

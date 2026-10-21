@@ -4,7 +4,7 @@
         xmlns:vm="using:OCnM.App.ViewModels"
         x:Class="OCnM.App.Views.DonutWindow"
         x:DataType="vm:DonutViewModel"
-        Title="Slotty"
+        Title="OCnM"
         Width="440" Height="500"
         MinWidth="440" MaxWidth="440" MinHeight="500" MaxHeight="500"
         CanResize="False" CanMinimize="False" CanMaximize="False"
