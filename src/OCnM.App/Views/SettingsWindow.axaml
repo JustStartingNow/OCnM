@@ -1,0 +1,325 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:c="using:OCnM.App.Controls"
+        xmlns:vm="using:OCnM.App.ViewModels"
+        x:Class="OCnM.App.Views.SettingsWindow"
+        x:DataType="vm:SettingsViewModel"
+        Title="Slotty Settings"
+        Width="1000" Height="760" MinWidth="780" MinHeight="540"
+        Background="{DynamicResource OCnMWindowBg}"
+        WindowStartupLocation="CenterScreen">
+  <Window.Styles>
+    <Style Selector="Border.section">
+      <Setter Property="Background" Value="{DynamicResource OCnMCard}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource OCnMStroke}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="Padding" Value="20,16" />
+    </Style>
+    <Style Selector="TextBlock.h1">
+      <Setter Property="FontSize" Value="22" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="TextBlock.h2">
+      <Setter Property="FontSize" Value="15" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <!-- Row labels line up with the first line of their control, even when help text follows. -->
+    <Style Selector="TextBlock.label">
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="FontWeight" Value="Medium" />
+      <Setter Property="VerticalAlignment" Value="Top" />
+      <Setter Property="Margin" Value="0,7,0,0" />
+    </Style>
+    <Style Selector="TextBlock.help">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Foreground" Value="{DynamicResource OCnMMuted}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style Selector="TextBlock.columnHeader">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="FontWeight" Value="Medium" />
+      <Setter Property="Foreground" Value="{DynamicResource OCnMMuted}" />
+    </Style>
+    <Style Selector="TextBlock.status.error">
+      <Setter Property="Foreground" Value="{DynamicResource OCnMError}" />
+    </Style>
+    <Style Selector="TextBlock.status.ok">
+      <Setter Property="Foreground" Value="{DynamicResource OCnMSuccess}" />
+    </Style>
+
+    <!-- Slice rows: subtle hover state so the row being edited is easy to track. -->
+    <Style Selector="Border.row">
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Padding" Value="4,4" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Transitions">
+        <Transitions>
+          <BrushTransition Property="Background" Duration="0:0:0.12" />
+        </Transitions>
+      </Setter>
+    </Style>
+    <Style Selector="Border.row:pointerover">
+      <Setter Property="Background" Value="{DynamicResource OCnMCardHover}" />
+    </Style>
+    <Style Selector="Border.grip">
+      <Setter Property="Cursor" Value="SizeNorthSouth" />
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Border.badge">
+      <Setter Property="Width" Value="24" />
+      <Setter Property="Height" Value="24" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="Background" Value="{DynamicResource OCnMAccentSoft}" />
+    </Style>
+    <Style Selector="TextBox.invalid, TextBox.missing">
+      <Setter Property="BorderBrush" Value="{DynamicResource OCnMError}" />
+    </Style>
+    <Style Selector="Ellipse.swatch">
+      <Setter Property="Stroke" Value="{DynamicResource OCnMStroke}" />
+      <Setter Property="StrokeThickness" Value="1.5" />
+    </Style>
+    <Style Selector="Ellipse.swatch.invalid">
+      <Setter Property="Stroke" Value="{DynamicResource OCnMError}" />
+      <Setter Property="StrokeThickness" Value="2" />
+    </Style>
+  </Window.Styles>
+
+  <DockPanel>
+    <!-- Footer: always visible actions and status. -->
+    <Border DockPanel.Dock="Bottom" Background="{DynamicResource OCnMCard}" BorderBrush="{DynamicResource OCnMStroke}"
+            BorderThickness="0,1,0,0" Padding="24,12">
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+        <StackPanel VerticalAlignment="Center" Spacing="2">
+          <TextBlock Classes="status" Text="{Binding StatusMessage}" Classes.error="{Binding StatusIsError}"
+                     Classes.ok="{Binding !StatusIsError}" TextWrapping="Wrap" FontWeight="Medium" />
+          <TextBlock Classes="help" Text="{Binding EnvironmentInfo}" />
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <Button Content="Revert" Command="{Binding RevertCommand}" ToolTip.Tip="Discard unsaved changes" />
+          <Button Content="Cancel" Command="{Binding CancelCommand}" IsCancel="True" />
+          <Button Content="Save" Classes="accent" Command="{Binding SaveCommand}" IsDefault="True" MinWidth="90" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+      <StackPanel Margin="24,20,24,24" Spacing="16" MaxWidth="1100">
+        <!-- Header -->
+        <StackPanel Spacing="4">
+          <TextBlock Classes="h1" Text="Settings" />
+          <TextBlock Classes="help" Text="Give each slice a folder, then drop files on it to copy or move them. Changes apply when you press Save." />
+        </StackPanel>
+
+        <!-- Slices -->
+        <Border Classes="section">
+          <StackPanel Spacing="10">
+            <StackPanel Spacing="2">
+              <TextBlock Classes="h2" Text="Slices" />
+              <TextBlock Classes="help"
+                         Text="Slice 1 starts at 12 o'clock and the rest follow clockwise. Reorder with the arrow buttons or drag the handle on the left." />
+            </StackPanel>
+            <Grid ColumnDefinitions="28,32,40,150,*,148,108,104" Margin="4,6,4,0">
+              <TextBlock Grid.Column="1" Classes="columnHeader" Text="#" HorizontalAlignment="Center" />
+              <TextBlock Grid.Column="2" Classes="columnHeader" Text="Color" />
+              <TextBlock Grid.Column="3" Classes="columnHeader" Text="Label" />
+              <TextBlock Grid.Column="4" Classes="columnHeader" Text="Folder" />
+              <TextBlock Grid.Column="5" Classes="columnHeader" Text="Icon" />
+              <TextBlock Grid.Column="6" Classes="columnHeader" Text="Drop action" />
+            </Grid>
+            <ItemsControl Name="RowsList" ItemsSource="{Binding Rows}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="vm:SliceRowViewModel">
+                  <Border Classes="row">
+                    <Grid ColumnDefinitions="28,32,40,150,*,148,108,104">
+                      <Border Classes="grip" ToolTip.Tip="Drag to reorder">
+                        <c:IconGlyph Icon="{x:Static c:DonutIcons.Grip}" Width="18" Height="18" StrokeWidth="2.6"
+                                     Foreground="{DynamicResource OCnMMuted}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      </Border>
+                      <Border Grid.Column="1" Classes="badge" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Number}" FontSize="12" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      </Border>
+                      <Button Grid.Column="2" Classes="ghost" Width="34" Height="34" Padding="0"
+                              AutomationProperties.Name="Change color" ToolTip.Tip="Change color">
+                        <Ellipse Classes="swatch" Classes.invalid="{Binding ColorInvalid}" Width="18" Height="18" Fill="{Binding SwatchBrush}" />
+                        <Button.Flyout>
+                          <Flyout Placement="BottomEdgeAlignedLeft">
+                            <StackPanel Spacing="10" Width="216">
+                              <TextBlock Classes="columnHeader" Text="Color" />
+                              <ItemsControl ItemsSource="{Binding Swatches}">
+                                <ItemsControl.ItemsPanel>
+                                  <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                  </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                  <DataTemplate DataType="vm:SwatchItem">
+                                    <Button Classes="ghost" Command="{Binding SelectCommand}" ToolTip.Tip="{Binding Name}"
+                                            AutomationProperties.Name="{Binding Name}" Width="36" Height="36" Padding="0">
+                                      <Ellipse Classes="swatch" Width="22" Height="22" Fill="{Binding Brush}" />
+                                    </Button>
+                                  </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                              </ItemsControl>
+                              <TextBox Text="{Binding ColorText}" PlaceholderText="#RRGGBB (empty = default)"
+                                       Classes.invalid="{Binding ColorInvalid}" AutomationProperties.Name="Custom color" />
+                              <TextBlock Classes="status error" FontSize="12" Text="Use a hex color like #3366FF."
+                                         IsVisible="{Binding ColorInvalid}" />
+                            </StackPanel>
+                          </Flyout>
+                        </Button.Flyout>
+                      </Button>
+                      <TextBox Grid.Column="3" Margin="0,0,8,0" Text="{Binding Label}" PlaceholderText="{Binding LabelPlaceholder}"
+                               AutomationProperties.Name="Label" VerticalAlignment="Center" />
+                      <Grid Grid.Column="4" ColumnDefinitions="*,Auto" Margin="0,0,8,0" VerticalAlignment="Center">
+                        <TextBox Text="{Binding Path}" PlaceholderText="No folder yet" Classes.missing="{Binding PathMissing}"
+                                 AutomationProperties.Name="Folder path"
+                                 ToolTip.Tip="Folder path. A red border means the folder does not exist." />
+                        <Button Grid.Column="1" Margin="6,0,0,0" Command="{Binding BrowseCommand}"
+                                AutomationProperties.Name="Browse for a folder" ToolTip.Tip="Browse for a folder">
+                          <StackPanel Orientation="Horizontal" Spacing="6">
+                            <c:IconGlyph Icon="{x:Static c:DonutIcons.FolderOpen}" Width="16" Height="16" />
+                            <TextBlock Text="Browse" />
+                          </StackPanel>
+                        </Button>
+                      </Grid>
+                      <ComboBox Grid.Column="5" Margin="0,0,8,0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                                ItemsSource="{Binding IconOptions}" SelectedIndex="{Binding IconIndex}"
+                                AutomationProperties.Name="Icon">
+                        <ComboBox.ItemTemplate>
+                          <DataTemplate DataType="vm:IconOption">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                              <c:IconGlyph Icon="{Binding Glyph}" Width="16" Height="16" Foreground="{DynamicResource OCnMMuted}" />
+                              <TextBlock Text="{Binding Name}" />
+                            </StackPanel>
+                          </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                      </ComboBox>
+                      <ComboBox Grid.Column="6" Margin="0,0,8,0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                                SelectedIndex="{Binding ActionIndex}" AutomationProperties.Name="Drop action">
+                        <ComboBoxItem Content="Default" />
+                        <ComboBoxItem Content="Copy" />
+                        <ComboBoxItem Content="Move" />
+                      </ComboBox>
+                      <StackPanel Grid.Column="7" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                        <Button Classes="ghost" Command="{Binding MoveUpCommand}" IsEnabled="{Binding CanMoveUp}"
+                                AutomationProperties.Name="Move up" ToolTip.Tip="Move up">
+                          <c:IconGlyph Icon="{x:Static c:DonutIcons.ChevronUp}" Width="16" Height="16" />
+                        </Button>
+                        <Button Classes="ghost" Command="{Binding MoveDownCommand}" IsEnabled="{Binding CanMoveDown}"
+                                AutomationProperties.Name="Move down" ToolTip.Tip="Move down">
+                          <c:IconGlyph Icon="{x:Static c:DonutIcons.ChevronDown}" Width="16" Height="16" />
+                        </Button>
+                        <Button Classes="ghost" Command="{Binding ClearCommand}"
+                                AutomationProperties.Name="Clear slice" ToolTip.Tip="Clear slice">
+                          <c:IconGlyph Icon="{x:Static c:DonutIcons.Cross}" Width="14" Height="14" />
+                        </Button>
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+        <!-- Dropping -->
+        <Border Classes="section">
+          <Grid ColumnDefinitions="240,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="14">
+            <TextBlock Grid.ColumnSpan="2" Classes="h2" Text="Dropping" />
+
+            <TextBlock Grid.Row="1" Classes="label" Text="Default drop action" />
+            <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4">
+              <ComboBox Width="300" SelectedIndex="{Binding DefaultActionIndex}" AutomationProperties.Name="Default drop action">
+                <ComboBoxItem Content="Copy" />
+                <ComboBoxItem Content="Move" />
+              </ComboBox>
+              <TextBlock Classes="help" Text="Hold Shift while dropping to move, Ctrl to copy." />
+            </StackPanel>
+
+            <TextBlock Grid.Row="2" Classes="label" Text="When a name already exists" />
+            <StackPanel Grid.Row="2" Grid.Column="1" Spacing="4">
+              <ComboBox Width="300" SelectedIndex="{Binding ConflictPolicyIndex}" AutomationProperties.Name="When a name already exists">
+                <ComboBoxItem Content="Keep both (rename to “name (1).ext”)" />
+                <ComboBoxItem Content="Skip the item" />
+                <ComboBoxItem Content="Ask me" />
+              </ComboBox>
+              <TextBlock Classes="help" Text="Existing files are never overwritten without asking." />
+            </StackPanel>
+
+            <TextBlock Grid.Row="3" Classes="label" Text="Hide after a drop" />
+            <StackPanel Grid.Row="3" Grid.Column="1" Spacing="4">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <NumericUpDown Width="150" Minimum="0" Maximum="60" Increment="0.5" FormatString="0.0"
+                               Value="{Binding HideAfterDropSeconds}" AutomationProperties.Name="Hide after a drop, in seconds" />
+                <TextBlock Text="seconds" FontSize="13" VerticalAlignment="Center" />
+              </StackPanel>
+              <TextBlock Classes="help" Text="0 keeps the donut open. It also stays while the pointer is over it." />
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <!-- Window and startup -->
+        <Border Classes="section">
+          <Grid ColumnDefinitions="240,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="14">
+            <TextBlock Grid.ColumnSpan="2" Classes="h2" Text="Window and startup" />
+
+            <TextBlock Grid.Row="1" Classes="label" Text="Theme" />
+            <ComboBox Grid.Row="1" Grid.Column="1" Width="300" SelectedIndex="{Binding ThemeIndex}" AutomationProperties.Name="Theme">
+              <ComboBoxItem Content="Follow the system" />
+              <ComboBoxItem Content="Light" />
+              <ComboBoxItem Content="Dark" />
+            </ComboBox>
+
+            <TextBlock Grid.Row="2" Classes="label" Text="Global shortcut" />
+            <StackPanel Grid.Row="2" Grid.Column="1" Spacing="4">
+              <TextBox Width="300" HorizontalAlignment="Left" Text="{Binding Hotkey}" IsEnabled="{Binding HotkeySupported}"
+                       PlaceholderText="Ctrl+Alt+Space" Classes.invalid="{Binding HotkeyError, Converter={x:Static ObjectConverters.IsNotNull}}"
+                       AutomationProperties.Name="Global shortcut" />
+              <TextBlock Classes="status error" FontSize="12" Text="{Binding HotkeyError}"
+                         IsVisible="{Binding HotkeyError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+              <TextBlock Classes="help" Text="{Binding HotkeyNote}" />
+            </StackPanel>
+
+            <TextBlock Grid.Row="3" Classes="label" Text="Hide when focus is lost" />
+            <CheckBox Grid.Row="3" Grid.Column="1" IsChecked="{Binding HideOnFocusLoss}"
+                      Content="Hide the donut when another window is clicked (not while pinned)" />
+
+            <TextBlock Grid.Row="4" Classes="label" Text="Tray icon" />
+            <CheckBox Grid.Row="4" Grid.Column="1" IsChecked="{Binding ShowTrayIcon}"
+                      Content="Show an icon in the system tray, if the desktop has one" />
+
+            <TextBlock Grid.Row="5" Classes="label" Text="Start at login" />
+            <CheckBox Grid.Row="5" Grid.Column="1" IsChecked="{Binding LaunchAtLogin}" IsEnabled="{Binding AutostartSupported}"
+                      Content="Start Slotty hidden when I log in" />
+          </Grid>
+        </Border>
+
+        <!-- Accessibility and advanced -->
+        <Border Classes="section">
+          <Grid ColumnDefinitions="240,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="14">
+            <TextBlock Grid.ColumnSpan="2" Classes="h2" Text="Accessibility and advanced" />
+
+            <TextBlock Grid.Row="1" Classes="label" Text="Animations" />
+            <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4">
+              <CheckBox IsChecked="{Binding ReduceMotion}" Content="Reduce animations" />
+              <TextBlock Classes="help" Text="Shows and hides the donut instantly. Also follows the system setting where Slotty can read it (Windows, KDE, GNOME)." />
+            </StackPanel>
+
+            <TextBlock Grid.Row="2" Classes="label" Text="Linux backend" IsVisible="{Binding IsLinux}" />
+            <StackPanel Grid.Row="2" Grid.Column="1" Spacing="4" IsVisible="{Binding IsLinux}">
+              <ComboBox Width="300" SelectedIndex="{Binding LinuxBackendIndex}" AutomationProperties.Name="Linux backend">
+                <ComboBoxItem Content="Automatic" />
+                <ComboBoxItem Content="X11 / XWayland" />
+                <ComboBoxItem Content="Native Wayland (experimental)" />
+              </ComboBox>
+              <TextBlock Classes="help" Text="Applies after a restart. --backend and SLOTTY_BACKEND override this. Drag and drop on Niri needs native Wayland." />
+              <SelectableTextBlock Classes="help" Text="{Binding ConfigPath}" FontSize="11" />
+            </StackPanel>
+          </Grid>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
+  </DockPanel>
+</Window>

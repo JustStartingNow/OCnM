@@ -1,9 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <RootNamespace>Slotty.Core</RootNamespace>
-    <IsTrimmable>true</IsTrimmable>
-  </PropertyGroup>
-  <ItemGroup>
-    <InternalsVisibleTo Include="Slotty.Tests" />
-  </ItemGroup>
-</Project>
