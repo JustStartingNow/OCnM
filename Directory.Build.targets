@@ -1,0 +1,4 @@
+<Project>
+  <!-- Avalonia.BuildServices sends build statistics; Slotty is a no-telemetry project, so the target is replaced with a no-op. -->
+  <Target Name="AvaloniaStats" />
+</Project>

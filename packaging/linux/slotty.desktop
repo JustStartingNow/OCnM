@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Slotty
+GenericName=Folder donut
+Comment=Donut menu of nine folders: drop files to copy or move them, click to open
+Exec=slotty --toggle
+Icon=slotty
+Terminal=false
+Categories=Utility;FileTools;
+StartupWMClass=slotty
