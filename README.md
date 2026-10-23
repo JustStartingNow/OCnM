@@ -2,8 +2,6 @@
 
 **Drop files onto a donut slice to copy or move them into a folder. 9 slices, 9 folders.**
 
-<p align="center"><img src="docs/images/donut.png" alt="The OCnM donut with nine slices, four of them set to folders" width="320"></p>
-
 ## What is it?
 
 OCnM is a small round menu with **9 slices**. You give each slice a folder you use a lot (Downloads, Photos, Work,
