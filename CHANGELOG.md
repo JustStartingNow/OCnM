@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.0
+
+- **Folders open in a tab instead of a new window** when a file manager window is already open:
+  - **Linux + Dolphin:** the folder opens as a new tab in the Dolphin window you used last (or switches to its tab
+    if it's already open), and that window is brought to the front (on Niri through Niri's IPC).
+  - **Windows 11:** folders are opened through the shell, so File Explorer's *"Open desktop folders and external
+    folder links in new tab"* option applies. Windows 10 has no tabs and still opens a window.
+  - Other file managers, macOS, or no open window: a new window opens as before.
+  - Turn it off in *Settings → Window and startup → Opening folders*.
+
 ## 1.1.0
 
 - **Custom slice colors.** A color picker with a hex box and Hue / Saturation / Brightness sliders, next to the

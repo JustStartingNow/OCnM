@@ -26,6 +26,8 @@
     <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.4" />
     <PackageReference Include="Avalonia.Wayland" Version="12.1.4" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <!-- Already used by Avalonia on Linux; referenced directly to ask Dolphin to open a tab. -->
+    <PackageReference Include="Tmds.DBus.Protocol" Version="0.94.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OCnM.Core\OCnM.Core.csproj" />

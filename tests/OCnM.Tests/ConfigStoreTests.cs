@@ -45,6 +45,7 @@ public class ConfigStoreTests : IDisposable
                 HideAfterDropMs = 1234,
                 Pinned = true,
                 ReduceMotion = true,
+                OpenFoldersInTabs = false,
                 LinuxBackend = LinuxBackend.Wayland,
             },
         };

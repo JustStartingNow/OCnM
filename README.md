@@ -87,6 +87,7 @@ right build for your computer, checks it, and puts it in your home folder (no ad
 | Empty a slice | Right-click → *Clear slice* |
 | Open all settings | Click the sliders button at the top right |
 | Keep the donut open while dragging from another window | Click the **pin** at the top left first |
+| Open folders in tabs, not new windows | On by default with Dolphin (Linux) and File Explorer (Windows 11). Turn it off in Settings → *Opening folders* |
 | Use the keyboard | **Arrow keys** choose a slice, **Enter** opens it, **Menu** key shows its options |
 
 ### Is it safe for my files?

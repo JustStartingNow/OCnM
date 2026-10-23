@@ -55,6 +55,9 @@ public sealed partial class SettingsViewModel : ObservableObject
     private bool _reduceMotion;
 
     [ObservableProperty]
+    private bool _openFoldersInTabs;
+
+    [ObservableProperty]
     private string? _statusMessage;
 
     [ObservableProperty]
@@ -111,6 +114,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         HideAfterDropSeconds = s.HideAfterDropMs / 1000.0;
         ShowTrayIcon = s.ShowTrayIcon;
         ReduceMotion = s.ReduceMotion;
+        OpenFoldersInTabs = s.OpenFoldersInTabs;
 
         Rows.Clear();
         foreach (var slice in config.Slices)
@@ -206,6 +210,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             HideAfterDropMs = (int)Math.Clamp(Math.Round(HideAfterDropSeconds * 1000), 0, 60_000),
             ShowTrayIcon = ShowTrayIcon,
             ReduceMotion = ReduceMotion,
+            OpenFoldersInTabs = OpenFoldersInTabs,
             LaunchAtLogin = LaunchAtLogin,
         };
 

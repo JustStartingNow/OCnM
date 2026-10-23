@@ -15,8 +15,9 @@ public enum SessionKind
 /// <summary>Opens a folder in the system file manager.</summary>
 public interface IFolderOpener
 {
+    /// <param name="preferNewTab">Open as a tab of an already open file manager window when that is possible.</param>
     /// <returns>Null on success, otherwise a user-facing error.</returns>
-    string? OpenFolder(string path);
+    Task<string?> OpenFolderAsync(string path, bool preferNewTab);
 }
 
 /// <summary>Start-at-login registration.</summary>

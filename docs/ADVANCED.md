@@ -251,6 +251,7 @@ Exit codes: 0 = OK, 1 = an instance exists but isn't answering, 2 = bad argument
 | Tray icon | ✔ | ✔ if a StatusNotifierItem host runs | ✔ if a tray host runs | best effort |
 | Always on top | ✔ | ✘ (use a window rule) | ✔ | best effort |
 | Start at login | ✔ HKCU `Run` key | `~/.config/autostart/ocnm.desktop` (see Niri note) | same | LaunchAgent |
+| Open folders in a tab of an open window | ✔ Windows 11 (Explorer's "open external folders in new tab" option); ✘ Windows 10 | ✔ Dolphin (D-Bus `openDirectories`; raised via Niri IPC on Niri) | ✔ Dolphin | ✘ new Finder window |
 | Single instance / CLI | ✔ named pipe | ✔ Unix socket | ✔ Unix socket | ✔ Unix socket |
 
 **What was tested.** Everything Linux/Wayland was exercised on CachyOS + Niri 26.04 with Dolphin: both backends,
@@ -372,6 +373,7 @@ A single JSON file:
     "pinned": false,
     "showTrayIcon": true,
     "reduceMotion": false,
+    "openFoldersInTabs": true,
     "linuxBackend": "auto"
   },
   "slices": [

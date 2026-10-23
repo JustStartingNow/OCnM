@@ -255,7 +255,7 @@
 
         <!-- Window and startup -->
         <Border Classes="section">
-          <Grid ColumnDefinitions="240,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="14">
+          <Grid ColumnDefinitions="240,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="14">
             <TextBlock Grid.ColumnSpan="2" Classes="h2" Text="Window and startup" />
 
             <TextBlock Grid.Row="1" Classes="label" Text="Theme" />
@@ -286,6 +286,12 @@
             <TextBlock Grid.Row="5" Classes="label" Text="Start at login" />
             <CheckBox Grid.Row="5" Grid.Column="1" IsChecked="{Binding LaunchAtLogin}" IsEnabled="{Binding AutostartSupported}"
                       Content="Start OCnM hidden when I log in" />
+
+            <TextBlock Grid.Row="6" Classes="label" Text="Opening folders" />
+            <StackPanel Grid.Row="6" Grid.Column="1" Spacing="4">
+              <CheckBox IsChecked="{Binding OpenFoldersInTabs}" Content="Open folders in a new tab of an open file manager window" />
+              <TextBlock Classes="help" Text="Works with Dolphin on Linux, and with File Explorer on Windows 11 when its option to open external folders in a new tab is on. Otherwise, or when no window is open, a new window opens." />
+            </StackPanel>
           </Grid>
         </Border>
 

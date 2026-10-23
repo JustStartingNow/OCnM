@@ -258,7 +258,7 @@ public partial class DonutWindow : Window, IFolderPicker
                 Submenu("Change icon", iconItems, assigned),
                 Submenu($"Drop action ({(defaultAction == DropAction.Move ? "move" : "copy")})", actionItems, assigned),
                 new Separator(),
-                Item("Open folder", () => vm.OpenFolder(i), enabled: exists),
+                Item("Open folder", () => _ = vm.OpenFolderAsync(i), enabled: exists),
                 Item("Clear slice", () => vm.ClearSlice(i), enabled: assigned),
             },
         };

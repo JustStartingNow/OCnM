@@ -138,6 +138,7 @@ public sealed class ConfigStore
             w.WriteBoolean("pinned", s.Pinned);
             w.WriteBoolean("showTrayIcon", s.ShowTrayIcon);
             w.WriteBoolean("reduceMotion", s.ReduceMotion);
+            w.WriteBoolean("openFoldersInTabs", s.OpenFoldersInTabs);
             w.WriteString("linuxBackend", EnumToJson(s.LinuxBackend));
             w.WriteEndObject();
 
@@ -216,6 +217,7 @@ public sealed class ConfigStore
             Pinned = ReadBool(e, "pinned") ?? d.Pinned,
             ShowTrayIcon = ReadBool(e, "showTrayIcon") ?? d.ShowTrayIcon,
             ReduceMotion = ReadBool(e, "reduceMotion") ?? d.ReduceMotion,
+            OpenFoldersInTabs = ReadBool(e, "openFoldersInTabs") ?? d.OpenFoldersInTabs,
             LinuxBackend = ReadEnum(e, "linuxBackend", d.LinuxBackend),
         };
     }

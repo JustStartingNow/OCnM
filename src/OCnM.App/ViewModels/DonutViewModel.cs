@@ -123,7 +123,7 @@ public sealed partial class DonutViewModel : ObservableObject
                 await SetFolderAsync(index);
                 break;
             default:
-                OpenFolder(index);
+                await OpenFolderAsync(index);
                 break;
         }
     }
@@ -142,7 +142,7 @@ public sealed partial class DonutViewModel : ObservableObject
         await InvokeSliceAsync(index);
     }
 
-    public void OpenFolder(int index)
+    public async Task OpenFolderAsync(int index)
     {
         var slice = Slices[index];
         slice.RefreshState();
@@ -151,7 +151,7 @@ public sealed partial class DonutViewModel : ObservableObject
             Toast.Show(ToastKind.Error, slice.State == DonutSliceState.Empty ? "This slice has no folder yet." : "The folder no longer exists.", slice.Path);
             return;
         }
-        var error = _folderOpener.OpenFolder(slice.Path!);
+        var error = await _folderOpener.OpenFolderAsync(slice.Path!, _config.Current.Settings.OpenFoldersInTabs);
         if (error is not null)
         {
             Toast.Show(ToastKind.Error, "Could not open the folder.", error);

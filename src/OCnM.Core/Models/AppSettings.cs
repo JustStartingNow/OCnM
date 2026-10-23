@@ -27,6 +27,12 @@ public sealed record AppSettings
 
     public bool ShowTrayIcon { get; init; } = true;
 
+    /// <summary>
+    /// Open a slice's folder as a new tab in a file manager window that is already open, where the file manager
+    /// allows it (Dolphin on Linux, File Explorer on Windows 11). Otherwise a new window opens.
+    /// </summary>
+    public bool OpenFoldersInTabs { get; init; } = true;
+
     /// <summary>Turns off the donut's open/close and hover animations (also follows the OS setting where detectable).</summary>
     public bool ReduceMotion { get; init; }
 
