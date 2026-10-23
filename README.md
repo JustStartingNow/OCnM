@@ -23,7 +23,7 @@ Niri as a first-class compositor.
 | Copy / move files | Drop files and folders onto an assigned slice. Default is **Copy**. Hold **Shift** while dropping to move, **Ctrl** to copy |
 | Open a folder | Click the slice, or press **1–9** |
 | Keyboard | **Arrow keys** move a focus ring between slices, **Enter/Space** opens, **Menu** or **Shift+F10** shows the slice menu, **Tab** reaches the buttons |
-| Configure a slice | Right-click: *Change folder, Rename, Change color, Change icon, Drop action (default/copy/move), Open folder, Clear slice* |
+| Configure a slice | Right-click: *Change folder, Rename, Change color (palette or Custom color…), Change icon, Drop action (default/copy/move), Open folder, Clear slice* |
 | Undo the last drop | **Undo** in the toast below the donut (deletes the copies it made, or moves items back). Toasts dismiss themselves after 5–9 s and stay while the pointer is on them |
 | Move the window | Drag the center hub (Windows/X11; on Niri use Mod+drag) |
 | Keep it open while dragging | The **pin** button (top-left). Needed on Wayland if you click another window *before* dragging |
@@ -48,11 +48,47 @@ icon. Click it or drop a folder on it to re-assign it.
 
 ## Install
 
-OCnM has no download page or installer yet. You build a self-contained binary once with the .NET SDK. It includes
-the .NET runtime, so the machine that *runs* it needs nothing else. You can build every platform's binary from any
-OS; for example, build the Windows `.exe` on Linux and copy it over.
+### Download (easiest)
 
-### Step 1: build the binary (any OS)
+Get the latest build from the **[Releases page](https://github.com/JustStartingNow/OCnM/releases/latest)**. Nothing else
+needs to be installed.
+
+| Your system | Download | Then |
+|---|---|---|
+| **Linux**, Intel/AMD | `ocnm-linux-x64.tar.gz` | see [Linux](#linux) |
+| **Linux**, ARM | `ocnm-linux-arm64.tar.gz` | see [Linux](#linux) |
+| **macOS**, Apple Silicon | `ocnm-osx-arm64.tar.gz` | see [macOS](#macos-best-effort-not-tested-yet) |
+| **macOS**, Intel | `ocnm-osx-x64.tar.gz` | see [macOS](#macos-best-effort-not-tested-yet) |
+| **Windows**, Intel/AMD | `ocnm-win-x64.zip` | unzip and run `ocnm.exe`; see [Windows](#windows-10--11) |
+| **Windows**, ARM | `ocnm-win-arm64.zip` | same |
+
+`SHA256SUMS` on the same page lets you verify a download.
+
+### One command (Linux and macOS)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/JustStartingNow/OCnM/master/install.sh | sh
+```
+
+This picks the right build for your OS and CPU, checks its SHA-256, and installs it for your user (no root):
+`~/.local/bin/ocnm`, plus a launcher entry and icon on Linux. Then run `ocnm --toggle`.
+
+```bash
+# a specific version
+curl -fsSL https://raw.githubusercontent.com/JustStartingNow/OCnM/master/install.sh | sh -s -- --version 1.1.0
+# remove it again (your settings are kept)
+curl -fsSL https://raw.githubusercontent.com/JustStartingNow/OCnM/master/install.sh | sh -s -- --uninstall
+```
+
+Prefer to read it first? It's [`install.sh`](install.sh), about 130 lines. Running it again updates OCnM.
+If `~/.local/bin` is not on your `PATH`, the script tells you how to add it. On Wayland, bind `ocnm --toggle` to a key
+(see the [Niri section](#niri) for an example).
+
+The sections below cover building from source, and per-platform details (autostart, keybinds, uninstall).
+
+### Build from source
+
+#### Step 1: build the binary (any OS)
 
 Install the **.NET 10 SDK**:
 
@@ -202,7 +238,7 @@ ocnm --toggle
 
 ### Updating
 
-Quit the running copy (`ocnm --quit`, or *Quit* in the tray), replace the binary with a newly published one, and
+With the one-command installer, just run it again. Otherwise quit the running copy (`ocnm --quit`, or *Quit* in the tray), replace the binary with a newly published one, and
 start it again. Settings live in the config file (see below) and are kept.
 
 ### Upgrading from Slotty
@@ -396,6 +432,12 @@ A single JSON file:
 
 ## Look and feel
 
+- **Custom colors.** Besides the 12-color palette, a slice can have any color: type a hex value or drag the Hue /
+  Saturation / Brightness sliders. It is in Settings (click a slice's color dot) and in the donut's right-click menu
+  (*Change color → Custom color…*). Typing and sliding stay in sync, and a wrong hex is flagged on the spot.
+- **Reordering slices** in Settings: drag a row's handle (the row lifts and the others slide out of the way) or use
+  the arrow buttons (which animate too). There is no hover highlight on rows, so moving the mouse over the list is calm.
+
 - The donut opens with a short scale-and-fade (190 ms, decelerating) and closes faster (120 ms). Hover, drag and focus
   highlights blend over 120 ms. The slice under a drag lifts outwards and the hub shows *Copy to* / *Move to* with the path.
 - **Reduce animations** (Settings → Accessibility, `"reduceMotion": true`) makes every change instant. OCnM also follows
@@ -423,6 +465,9 @@ src/OCnM.Core/    models, config store, transfer engine + undo, donut geometry, 
 src/OCnM.App/     Avalonia app: DonutMenu control, windows, view models, per-OS platform implementations
 tests/OCnM.Tests/ xUnit: hit-testing, config, conflicts, copy/move/undo, nesting, IPC, hotkey parsing, …
 packaging/          .desktop file and SVG icon
+install.sh          one-command installer for Linux and macOS
+scripts/package.sh  builds one release archive (used by CI and for local builds)
+.github/workflows/  test.yml (tests on Linux and Windows), release.yml (builds and publishes a release for a v* tag)
 docs/ARCHITECTURE.md
 ```
 
