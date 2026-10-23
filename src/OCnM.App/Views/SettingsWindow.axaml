@@ -5,7 +5,7 @@
         x:Class="OCnM.App.Views.SettingsWindow"
         x:DataType="vm:SettingsViewModel"
         Title="OCnM Settings"
-        Width="1000" Height="760" MinWidth="780" MinHeight="540"
+        Width="1000" Height="760" MinWidth="900" MinHeight="540"
         Background="{DynamicResource OCnMWindowBg}"
         WindowStartupLocation="CenterScreen">
   <Window.Styles>
@@ -48,19 +48,32 @@
       <Setter Property="Foreground" Value="{DynamicResource OCnMSuccess}" />
     </Style>
 
-    <!-- Slice rows: subtle hover state so the row being edited is easy to track. -->
+    <!-- Slice rows: no hover highlight (it flashed while moving the pointer over the list). A row only changes
+         look while it is being dragged: it lifts with a shadow and an accent outline. -->
     <Style Selector="Border.row">
       <Setter Property="CornerRadius" Value="8" />
-      <Setter Property="Padding" Value="4,4" />
+      <Setter Property="Padding" Value="3,3" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="BorderBrush" Value="Transparent" />
       <Setter Property="Background" Value="Transparent" />
+      <Setter Property="RenderTransform" Value="scale(1)" />
       <Setter Property="Transitions">
         <Transitions>
-          <BrushTransition Property="Background" Duration="0:0:0.12" />
+          <BrushTransition Property="Background" Duration="0:0:0.14" />
+          <BrushTransition Property="BorderBrush" Duration="0:0:0.14" />
+          <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.14" />
+          <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.14" Easing="CubicEaseOut" />
         </Transitions>
       </Setter>
     </Style>
-    <Style Selector="Border.row:pointerover">
+    <Style Selector="Border.row.dragging">
       <Setter Property="Background" Value="{DynamicResource OCnMCardHover}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource OCnMAccent}" />
+      <Setter Property="BoxShadow" Value="0 8 22 0 #50000000" />
+      <Setter Property="RenderTransform" Value="scale(1.012)" />
+    </Style>
+    <Style Selector="Window.reducedMotion Border.row">
+      <Setter Property="Transitions" Value="{x:Null}" />
     </Style>
     <Style Selector="Border.grip">
       <Setter Property="Cursor" Value="SizeNorthSouth" />
@@ -97,7 +110,7 @@
         </StackPanel>
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
           <Button Content="Revert" Command="{Binding RevertCommand}" ToolTip.Tip="Discard unsaved changes" />
-          <Button Content="Cancel" Command="{Binding CancelCommand}" IsCancel="True" />
+          <Button Content="Close" Command="{Binding CancelCommand}" IsCancel="True" ToolTip.Tip="Close this window; unsaved changes are discarded" />
           <Button Content="Save" Classes="accent" Command="{Binding SaveCommand}" IsDefault="True" MinWidth="90" />
         </StackPanel>
       </Grid>
@@ -131,7 +144,7 @@
             <ItemsControl Name="RowsList" ItemsSource="{Binding Rows}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="vm:SliceRowViewModel">
-                  <Border Classes="row">
+                  <Border Classes="row" Classes.dragging="{Binding IsDragging}">
                     <Grid ColumnDefinitions="28,32,40,150,*,148,108,104">
                       <Border Classes="grip" ToolTip.Tip="Drag to reorder">
                         <c:IconGlyph Icon="{x:Static c:DonutIcons.Grip}" Width="18" Height="18" StrokeWidth="2.6"
@@ -146,28 +159,7 @@
                         <Ellipse Classes="swatch" Classes.invalid="{Binding ColorInvalid}" Width="18" Height="18" Fill="{Binding SwatchBrush}" />
                         <Button.Flyout>
                           <Flyout Placement="BottomEdgeAlignedLeft">
-                            <StackPanel Spacing="10" Width="216">
-                              <TextBlock Classes="columnHeader" Text="Color" />
-                              <ItemsControl ItemsSource="{Binding Swatches}">
-                                <ItemsControl.ItemsPanel>
-                                  <ItemsPanelTemplate>
-                                    <WrapPanel />
-                                  </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                  <DataTemplate DataType="vm:SwatchItem">
-                                    <Button Classes="ghost" Command="{Binding SelectCommand}" ToolTip.Tip="{Binding Name}"
-                                            AutomationProperties.Name="{Binding Name}" Width="36" Height="36" Padding="0">
-                                      <Ellipse Classes="swatch" Width="22" Height="22" Fill="{Binding Brush}" />
-                                    </Button>
-                                  </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                              </ItemsControl>
-                              <TextBox Text="{Binding ColorText}" PlaceholderText="#RRGGBB (empty = default)"
-                                       Classes.invalid="{Binding ColorInvalid}" AutomationProperties.Name="Custom color" />
-                              <TextBlock Classes="status error" FontSize="12" Text="Use a hex color like #3366FF."
-                                         IsVisible="{Binding ColorInvalid}" />
-                            </StackPanel>
+                            <c:ColorEditorView DataContext="{Binding ColorEditor}" />
                           </Flyout>
                         </Button.Flyout>
                       </Button>

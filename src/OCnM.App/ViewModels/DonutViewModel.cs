@@ -200,6 +200,12 @@ public sealed partial class DonutViewModel : ObservableObject
             CloseOverlay);
     }
 
+    public void BeginCustomColor(int index)
+    {
+        Overlay = new ColorOverlayViewModel(index, Slices[index].Config.Color,
+            (i, hex) => ReportSaveError(_config.UpdateSlice(i, s => s with { Color = hex })), CloseOverlay);
+    }
+
     public void SetColor(int index, string? hex) => ReportSaveError(_config.UpdateSlice(index, s => s with { Color = hex }));
 
     public void SetIcon(int index, SliceIcon? icon) => ReportSaveError(_config.UpdateSlice(index, s => s with { Icon = icon }));

@@ -189,7 +189,7 @@ internal sealed class AppController : IDisposable
     public void Hide()
     {
         CancelHide();
-        if (_donutVm.Overlay is RenameOverlayViewModel)
+        if (_donutVm.Overlay is RenameOverlayViewModel or ColorOverlayViewModel)
             _donutVm.CloseOverlay();
         _donut.HideAnimated();
     }

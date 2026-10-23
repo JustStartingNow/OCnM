@@ -107,6 +107,18 @@
                 </StackPanel>
               </Border>
             </DataTemplate>
+            <DataTemplate DataType="vm:ColorOverlayViewModel">
+              <Border Classes="card" Width="292">
+                <StackPanel Spacing="14">
+                  <TextBlock Classes="overlayTitle" Text="{Binding Title}" />
+                  <c:ColorEditorView DataContext="{Binding Editor}" />
+                  <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                    <Button Content="Cancel" Command="{Binding CancelCommand}" IsCancel="True" />
+                    <Button Content="Save" Classes="accent" Command="{Binding SaveCommand}" IsDefault="True" />
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
             <DataTemplate DataType="vm:ConflictOverlayViewModel">
               <Border Classes="card" Width="340">
                 <StackPanel Spacing="12">

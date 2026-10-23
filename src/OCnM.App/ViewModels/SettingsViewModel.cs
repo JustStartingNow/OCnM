@@ -124,14 +124,22 @@ public sealed partial class SettingsViewModel : ObservableObject
             Rows[i].Position = i;
     }
 
+    /// <summary>
+    /// How a reorder is carried out. The window replaces this to slide the rows into place; the default just does it.
+    /// </summary>
+    public Action<Action> ReorderRunner { get; set; } = move => move();
+
     internal void MoveRow(SliceRowViewModel row, int delta)
     {
         var from = Rows.IndexOf(row);
         var to = from + delta;
         if (from < 0 || to < 0 || to >= Rows.Count)
             return;
-        Rows.Move(from, to);
-        Renumber();
+        ReorderRunner(() =>
+        {
+            Rows.Move(from, to);
+            Renumber();
+        });
     }
 
     /// <summary>Drag-and-drop reorder: moves <paramref name="row"/> to <paramref name="targetIndex"/>.</summary>
@@ -140,8 +148,11 @@ public sealed partial class SettingsViewModel : ObservableObject
         var from = Rows.IndexOf(row);
         if (from < 0 || targetIndex < 0 || targetIndex >= Rows.Count || from == targetIndex)
             return;
-        Rows.Move(from, targetIndex);
-        Renumber();
+        ReorderRunner(() =>
+        {
+            Rows.Move(from, targetIndex);
+            Renumber();
+        });
     }
 
     internal async Task BrowseAsync(SliceRowViewModel row)
@@ -215,9 +226,8 @@ public sealed partial class SettingsViewModel : ObservableObject
             return;
         }
         var restartNote = settings.LinuxBackend != old.Settings.LinuxBackend ? " The backend change applies after a restart." : "";
+        // The window stays open so several changes can be made and saved in a row.
         SetStatus("Saved." + restartNote, isError: false);
-        if (restartNote.Length == 0)
-            CloseRequested?.Invoke(this, EventArgs.Empty);
     }
 
     [RelayCommand]
@@ -251,9 +261,6 @@ public sealed partial class SliceRowViewModel : ObservableObject
     private string _path;
 
     [ObservableProperty]
-    private string _colorText;
-
-    [ObservableProperty]
     private int _iconIndex;
 
     [ObservableProperty]
@@ -264,11 +271,33 @@ public sealed partial class SliceRowViewModel : ObservableObject
         _owner = owner;
         _label = slice.Label ?? "";
         _path = slice.Path ?? "";
-        _colorText = slice.Color ?? "";
+        ColorEditor = new ColorEditorViewModel(slice.Color);
+        ColorEditor.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(ColorEditorViewModel.Hex))
+            {
+                OnPropertyChanged(nameof(ColorText));
+                OnPropertyChanged(nameof(SwatchBrush));
+                OnPropertyChanged(nameof(ColorInvalid));
+            }
+        };
         _iconIndex = (int)(slice.Icon ?? SliceIcon.Folder);
         _actionIndex = (int)slice.Action;
-        Swatches = [new SwatchItem(this, null, "Default"), .. DonutPalette.Swatches.Select(s => new SwatchItem(this, s.Hex, s.Name))];
     }
+
+    /// <summary>The popup next to the color swatch: palette, hex box and hue / saturation / brightness sliders.</summary>
+    public ColorEditorViewModel ColorEditor { get; }
+
+    /// <summary>Hex text as typed ("" = default color).</summary>
+    public string ColorText
+    {
+        get => ColorEditor.Hex;
+        set => ColorEditor.Hex = value ?? "";
+    }
+
+    /// <summary>True while this row is being dragged to a new position (drives the lifted look).</summary>
+    [ObservableProperty]
+    private bool _isDragging;
 
     public int Number => Position + 1;
 
@@ -289,8 +318,6 @@ public sealed partial class SliceRowViewModel : ObservableObject
         ? new SolidColorBrush(Color.Parse(hex))
         : Brushes.Transparent;
 
-    public IReadOnlyList<SwatchItem> Swatches { get; }
-
     public IReadOnlyList<IconOption> IconOptions => SettingsViewModel.IconOptions;
 
     partial void OnPositionChanged(int value)
@@ -305,12 +332,6 @@ public sealed partial class SliceRowViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(LabelPlaceholder));
         OnPropertyChanged(nameof(PathMissing));
-    }
-
-    partial void OnColorTextChanged(string value)
-    {
-        OnPropertyChanged(nameof(SwatchBrush));
-        OnPropertyChanged(nameof(ColorInvalid));
     }
 
     [RelayCommand]
@@ -341,14 +362,4 @@ public sealed partial class SliceRowViewModel : ObservableObject
         Icon = IconIndex <= 0 ? null : (SliceIcon)IconIndex,
         Action = (SliceAction)Math.Clamp(ActionIndex, 0, 2),
     };
-}
-
-public sealed partial class SwatchItem(SliceRowViewModel row, string? hex, string name)
-{
-    public string Name { get; } = name;
-
-    public IBrush Brush { get; } = hex is null ? Brushes.Transparent : new SolidColorBrush(Color.Parse(hex));
-
-    [RelayCommand]
-    private void Select() => row.ColorText = hex ?? "";
 }

@@ -194,7 +194,7 @@ public partial class DonutWindow : Window, IFolderPicker
     {
         if (ViewModel is { Overlay: not null } vm)
         {
-            if (vm.Overlay is RenameOverlayViewModel)
+            if (vm.Overlay is RenameOverlayViewModel or ColorOverlayViewModel)
                 vm.CloseOverlay();
             return;
         }
@@ -232,6 +232,9 @@ public partial class DonutWindow : Window, IFolderPicker
         };
         colorItems.AddRange(DonutPalette.Swatches.Select(s =>
             (object)Item(s.Name, () => vm.SetColor(i, s.Hex), icon: Swatch(s.Hex), isChecked: string.Equals(slice.Config.Color, s.Hex, StringComparison.OrdinalIgnoreCase))));
+
+        colorItems.Add(new Separator());
+        colorItems.Add(Item("Custom color…", () => vm.BeginCustomColor(i)));
 
         var iconItems = Enum.GetValues<SliceIcon>().Select(icon =>
             (object)Item(icon.ToString(), () => vm.SetIcon(i, icon == SliceIcon.Folder ? null : icon),

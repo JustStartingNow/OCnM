@@ -25,6 +25,45 @@ public sealed partial class RenameOverlayViewModel(int index, string current, st
     private void Cancel() => close();
 }
 
+/// <summary>Inline custom-color card (hex box, palette and sliders) shown over the donut.</summary>
+public sealed partial class ColorOverlayViewModel : ObservableObject
+{
+    private readonly int _index;
+    private readonly Action<int, string?> _commit;
+    private readonly Action _close;
+
+    public ColorOverlayViewModel(int index, string? currentHex, Action<int, string?> commit, Action close)
+    {
+        _index = index;
+        _commit = commit;
+        _close = close;
+        Editor = new ColorEditorViewModel(currentHex);
+        Editor.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(ColorEditorViewModel.IsInvalid))
+                SaveCommand.NotifyCanExecuteChanged();
+        };
+        Title = $"Color for slice {index + 1}";
+    }
+
+    public string Title { get; }
+
+    public ColorEditorViewModel Editor { get; }
+
+    private bool CanSave() => !Editor.IsInvalid;
+
+    [RelayCommand(CanExecute = nameof(CanSave))]
+    private void Save()
+    {
+        // An empty box means "use the default color".
+        _commit(_index, Editor.HasColor ? OCnM.Core.Config.ConfigStore.NormalizeColor(Editor.Hex) : null);
+        _close();
+    }
+
+    [RelayCommand]
+    private void Cancel() => _close();
+}
+
 /// <summary>Inline "file already exists" question for the Ask conflict policy.</summary>
 public sealed partial class ConflictOverlayViewModel : ObservableObject
 {
