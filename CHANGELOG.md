@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.2.1
 
 - **Niri: the first donut after login opens on the workspace you're on.** Before, when OCnM was started hidden at
   login (`spawn-at-startup "ocnm" "--hide"`), the first `--toggle` could open the donut on the workspace that was
