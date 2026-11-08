@@ -399,8 +399,8 @@ A single JSON file:
 - **Reordering slices** in Settings: drag a row's handle (the row lifts and the others slide out of the way) or use
   the arrow buttons (which animate too). There is no hover highlight on rows, so moving the mouse over the list is calm.
 
-- The donut opens with a short scale-and-fade (190 ms, decelerating) and closes faster (120 ms). Hover, drag and focus
-  highlights blend over 120 ms. The slice under a drag lifts outwards and the hub shows *Copy to* / *Move to* with the path.
+- The donut opens in 380 ms: the hub fades in, then the ring is wiped in clockwise from the top. It closes in 240 ms,
+  fading out inside two counter-rotating arcs that spin away. Frames follow the display's refresh rate. Hover, drag and focus highlights blend over 120 ms. The slice under a drag lifts outwards and the hub shows *Copy to* / *Move to* with the path.
 - **Reduce animations** (Settings → Accessibility, `"reduceMotion": true`) makes every change instant. OCnM also follows
   the OS setting where it can read it: Windows "Show animations", KDE `AnimationDurationFactor=0`, GNOME
   `enable-animations=false`.

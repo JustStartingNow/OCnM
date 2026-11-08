@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- **Niri: the first donut after login opens on the workspace you're on.** Before, when OCnM was started hidden at
+  login (`spawn-at-startup "ocnm" "--hide"`), the first `--toggle` could open the donut on the workspace that was
+  active at login and switch the view there. The donut window is now created the first time it is shown.
+- **New, smoother open/close animation.** Opening: the hub fades in, then the ring is wiped in clockwise from the top
+  like a clock hand. Closing: the donut fades out inside two counter-rotating arcs that spin away. Frames now follow the display's refresh rate (before: a 60 Hz
+  timer, which stuttered on high-refresh monitors), and the slow frames while the window appears no longer make the
+  animation skip.
+
 ## 1.2.0
 
 - **Folders open in a tab instead of a new window** when a file manager window is already open:

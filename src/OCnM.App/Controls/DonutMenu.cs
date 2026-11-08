@@ -1,5 +1,6 @@
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
@@ -66,7 +67,7 @@ public sealed class DonutMenu : Control
     public static readonly RoutedEvent<RoutedEventArgs> OutsideClickedEvent =
         RoutedEvent.Register<DonutMenu, RoutedEventArgs>(nameof(OutsideClicked), RoutingStrategies.Bubble);
 
-    private readonly DispatcherTimer _animationTimer;
+    private bool _frameRequested;
     private readonly List<IDonutSlice> _observedSlices = [];
     private DonutPalette _palette = DonutPalette.Light;
     private INotifyCollectionChanged? _observedCollection;
@@ -82,14 +83,18 @@ public sealed class DonutMenu : Control
     // Animated per-slice values, eased towards their targets on every frame.
     private double[] _emphasis = [];
     private double[] _lift = [];
-    private long _lastFrame;
+    private double _lastFrame;
 
     // Open/close animation: 0 = hidden, 1 = fully shown.
     private double _appear = 1;
     private double _appearFrom = 1;
     private double _appearTo = 1;
-    private long _appearStart;
+    // Set on the first frame after the animation starts (NaN until then), so window creation can't eat into it.
+    private double _appearStart = double.NaN;
+    private int _appearStalls;
     private Action? _appearDone;
+    // Which choreography _appear drives: the wipe (opening) or the arcs (closing). Both look identical at 0 and 1.
+    private bool _appearWipe = true;
 
     static DonutMenu()
     {
@@ -99,7 +104,6 @@ public sealed class DonutMenu : Control
 
     public DonutMenu()
     {
-        _animationTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(16), DispatcherPriority.Render, OnAnimationTick);
         DragDrop.SetAllowDrop(this, true);
         AddHandler(DragDrop.DragEnterEvent, OnDragOver);
         AddHandler(DragDrop.DragOverEvent, OnDragOver);
@@ -184,17 +188,29 @@ public sealed class DonutMenu : Control
 
     // ---- Open / close animation ----
 
-    /// <summary>Scales and fades the ring in (decelerating). Instant with reduced motion.</summary>
+    /// <summary>Opens with the clockwise wipe (<see cref="RenderWipe"/>). Instant with reduced motion.</summary>
     public void PlayEnter()
     {
         _focusVisible = false;
         _focusIndex = -1;
-        // Interrupting a close continues from where it is instead of jumping back to hidden.
-        AnimateAppear(_appearDone is not null ? _appear : 0, 1, null);
+        // Interrupting a close continues from where it is instead of jumping back to hidden, and keeps the close's
+        // style (played forwards), so nothing jumps.
+        var interrupting = _appearDone is not null;
+        if (!interrupting)
+            _appearWipe = true;
+        AnimateAppear(interrupting ? _appear : 0, 1, null);
     }
 
-    /// <summary>Fades the ring out (accelerating, shorter than enter), then calls <paramref name="done"/>.</summary>
-    public void PlayExit(Action done) => AnimateAppear(_appear, 0, done);
+    /// <summary>
+    /// Closes with the spinning arcs (<see cref="RenderArcs"/>), then calls <paramref name="done"/>. A close that
+    /// interrupts an open keeps the open's style (played backwards).
+    /// </summary>
+    public void PlayExit(Action done)
+    {
+        if (_appear >= 1)
+            _appearWipe = false;
+        AnimateAppear(_appear, 0, done);
+    }
 
     private void AnimateAppear(double from, double to, Action? done)
     {
@@ -210,7 +226,8 @@ public sealed class DonutMenu : Control
         _appearFrom = from;
         _appearTo = to;
         _appear = from;
-        _appearStart = Environment.TickCount64;
+        _appearStart = double.NaN;
+        _appearStalls = 0;
         _appearDone = done;
         StartAnimation();
     }
@@ -241,7 +258,7 @@ public sealed class DonutMenu : Control
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnDetachedFromVisualTree(e);
-        _animationTimer.Stop();
+        _frameRequested = false;
     }
 
     private void ObserveSlices(IReadOnlyList<IDonutSlice>? slices)
@@ -296,21 +313,41 @@ public sealed class DonutMenu : Control
             (s.IsBusy && s.Progress < 0) || (s.Flash != DonutFlash.None && now - s.FlashStartedAt < FlashDurationMs));
     }
 
-    /// <summary>Redraws now and keeps the frame timer running while anything is still moving.</summary>
+    private static double NowMs() => Stopwatch.GetTimestamp() * 1000.0 / Stopwatch.Frequency;
+
+    /// <summary>Redraws now and keeps frames coming while anything is still moving.</summary>
     private void StartAnimation()
     {
         InvalidateVisual();
-        if (!_animationTimer.IsEnabled && NeedsFrames())
+        if (!_frameRequested && NeedsFrames())
         {
-            _lastFrame = Environment.TickCount64;
-            _animationTimer.Start();
+            _lastFrame = NowMs();
+            RequestFrame();
         }
     }
 
-    private void OnAnimationTick(object? sender, EventArgs e)
+    /// <summary>
+    /// Frames come from the render loop (in step with the display), not from a 16 ms timer: a timer runs at most
+    /// at 60 Hz and drifts against the refresh, which looks stuttery next to a high-refresh compositor.
+    /// </summary>
+    private void RequestFrame()
     {
-        var now = Environment.TickCount64;
-        var dt = Math.Max(1, now - _lastFrame);
+        if (TopLevel.GetTopLevel(this) is not { } top)
+            return;
+        _frameRequested = true;
+        top.RequestAnimationFrame(_ =>
+        {
+            if (!_frameRequested)
+                return;
+            _frameRequested = false;
+            OnAnimationFrame();
+        });
+    }
+
+    private void OnAnimationFrame()
+    {
+        var now = NowMs();
+        var dt = Math.Max(0.5, now - _lastFrame);
         _lastFrame = now;
 
         // Highlights move linearly towards their target over Motion.StateMs (instant with reduced motion).
@@ -323,11 +360,23 @@ public sealed class DonutMenu : Control
 
         if (_appear != _appearTo)
         {
+            if (double.IsNaN(_appearStart))
+            {
+                _appearStart = now;
+            }
+            else if (dt > MaxFrameGapMs && _appearStalls < MaxStalls)
+            {
+                // A stall (creating and mapping the window takes a few long frames) pauses the animation instead of
+                // skipping a large part of it. Limited, so a machine that is always this slow still finishes.
+                _appearStart += dt;
+                _appearStalls++;
+            }
+            // _appear moves linearly in time; Render turns it into the eased, staggered choreography. Because the
+            // mapping is the same both ways, a close interrupted by an open (or the reverse) continues seamlessly.
             var entering = _appearTo > _appearFrom;
-            var duration = entering ? Motion.EnterMs : Motion.ExitMs;
-            var t = Math.Clamp((now - _appearStart) / duration, 0, 1);
-            var eased = entering ? Motion.EaseOut(t) : Motion.EaseIn(t);
-            _appear = t >= 1 ? _appearTo : _appearFrom + (_appearTo - _appearFrom) * eased;
+            var duration = (entering ? Motion.EnterMs : Motion.ExitMs) * Math.Abs(_appearTo - _appearFrom);
+            var t = duration <= 0 ? 1 : Math.Clamp((now - _appearStart) / duration, 0, 1);
+            _appear = t >= 1 ? _appearTo : _appearFrom + (_appearTo - _appearFrom) * t;
             if (t >= 1)
             {
                 var done = _appearDone;
@@ -337,9 +386,12 @@ public sealed class DonutMenu : Control
         }
 
         InvalidateVisual();
-        if (!NeedsFrames())
-            _animationTimer.Stop();
+        if (NeedsFrames())
+            RequestFrame();
     }
+
+    private const double MaxFrameGapMs = 34;
+    private const int MaxStalls = 4;
 
     private static double Approach(double current, double target, double step) =>
         current < target ? Math.Min(target, current + step) : Math.Max(target, current - step);
@@ -516,35 +568,164 @@ public sealed class DonutMenu : Control
         if (_appear <= 0.001)
             return;
 
-        var slices = Slices;
         var g = Geometry;
         var c = Center;
-        var p = _palette;
         var now = Environment.TickCount64;
+        if (_appearWipe)
+            RenderWipe(context, g, c, now);
+        else
+            RenderArcs(context, g, c, now);
+    }
 
-        // Open/close: a slight scale around the center plus a fade.
-        var scale = 0.9 + 0.1 * _appear;
-        var transform = Matrix.CreateTranslation(-c.X, -c.Y) * Matrix.CreateScale(scale, scale) * Matrix.CreateTranslation(c.X, c.Y);
-        using var _ = context.PushTransform(transform);
-        using var __ = context.PushOpacity(_appear);
+    /// <summary>
+    /// Close (after CSS spinner #1), described here as _appear goes from 0 to 1, i.e. as a close played backwards:
+    /// two arcs spin in opposite directions on the outer and inner edge of the ring and grow into full circles, the
+    /// donut fades in between them and the arcs fade away. Closing runs it from 1 to 0: the donut fades out inside
+    /// two circles that then break open and spin away.
+    /// </summary>
+    private void RenderArcs(DrawingContext context, DonutGeometry g, Point c, long now)
+    {
+        var a = Motion.EaseOut(Math.Clamp(_appear / 0.65, 0, 1));
+        var content = Math.Clamp((_appear - 0.35) / 0.65, 0, 1);
 
-        // Backdrop: one translucent disc behind everything, so the ring reads on any wallpaper.
-        var backdropPen = new Pen(new SolidColorBrush(p.SurfaceStroke), 1);
-        context.DrawEllipse(new SolidColorBrush(p.Surface), backdropPen, c, g.OuterRadius + 5, g.OuterRadius + 5);
-        context.DrawEllipse(new SolidColorBrush(p.Hub), backdropPen, c, g.HubRadius, g.HubRadius);
-
-        // Lifted (drag target) slices are drawn last so they sit on top of their neighbours.
-        var order = Enumerable.Range(0, g.SliceCount).OrderBy(i => i < _lift.Length ? _lift[i] : 0);
-        foreach (var i in order)
+        using (PushAppear(context, c, 0.94 + 0.06 * Motion.EaseOut(content), 0, content))
         {
-            var slice = slices is not null && i < slices.Count ? slices[i] : null;
-            DrawSlice(context, g, c, i, slice, now);
+            DrawBackdrop(context, g, c);
+            foreach (var i in SliceOrder(g))
+                DrawSlice(context, g, c, i, SliceAt(i), now);
+            DrawFocusIfShown(context, g, c);
+            DrawHubLayer(context, g, c);
         }
 
-        if (_focusVisible && IsFocused && _focusIndex >= 0)
-            DrawFocusRing(context, g, c, _focusIndex);
+        var arcOpacity = 1 - Math.Clamp((_appear - 0.7) / 0.3, 0, 1);
+        if (arcOpacity <= 0)
+            return;
+        using (context.PushOpacity(arcOpacity))
+        {
+            var pen = new Pen(new SolidColorBrush(_palette.Accent), 3.5, lineCap: PenLineCap.Round);
+            var sweep = 40 + 320 * a;
+            DrawArc(context, pen, c, g.OuterRadius + 5, -90 + 300 * a, sweep);          // clockwise
+            DrawArc(context, pen, c, g.InnerRadius - 5, 90 - 300 * a, sweep);           // counter-clockwise
+        }
+    }
 
-        DrawHub(context, g, c, slices);
+    /// <summary>
+    /// Open (after CSS spinner #5): the hub fades in, then the ring is revealed clockwise from the top like a clock
+    /// hand, with an accent line on the moving edge.
+    /// </summary>
+    private void RenderWipe(DrawingContext context, DonutGeometry g, Point c, long now)
+    {
+        var hubT = Math.Clamp(_appear / 0.3, 0, 1);
+        var w = Math.Clamp((_appear - 0.1) / 0.9, 0, 1);
+        var sweep = 360 * Motion.EaseInOut(w);
+        var radius = g.OuterRadius + 8;
+
+        if (sweep > 0.5)
+        {
+            using (sweep < 359.5 ? context.PushGeometryClip(PieGeometry(c, radius, 0, sweep)) : (IDisposable)EmptyDisposable.Instance)
+            {
+                DrawBackdrop(context, g, c);
+                foreach (var i in SliceOrder(g))
+                    DrawSlice(context, g, c, i, SliceAt(i), now);
+                DrawFocusIfShown(context, g, c);
+            }
+            if (sweep < 359.5)
+            {
+                // The "hand": a line along the moving edge, fading out as the circle closes.
+                var (ix, iy) = DonutGeometry.PointAt(sweep, g.InnerRadius);
+                var (ox, oy) = DonutGeometry.PointAt(sweep, g.OuterRadius + 5);
+                var fade = Math.Min(1, (360 - sweep) / 40);
+                var pen = new Pen(new SolidColorBrush(DonutPalette.WithAlpha(_palette.Accent, 0.9 * fade)), 3, lineCap: PenLineCap.Round);
+                context.DrawLine(pen, new Point(c.X + ix, c.Y + iy), new Point(c.X + ox, c.Y + oy));
+            }
+        }
+
+        using (PushAppear(context, c, 0.85 + 0.15 * Motion.EaseOut(hubT), 0, hubT))
+            DrawHubLayer(context, g, c);
+    }
+
+    // ---- Shared drawing for the open styles ----
+
+    private IDonutSlice? SliceAt(int i) => Slices is { } s && i < s.Count ? s[i] : null;
+
+    /// <summary>Lifted (drag target) slices are drawn last so they sit on top of their neighbours.</summary>
+    private IEnumerable<int> SliceOrder(DonutGeometry g) =>
+        Enumerable.Range(0, g.SliceCount).OrderBy(i => i < _lift.Length ? _lift[i] : 0);
+
+    private Pen BackdropPen => new(new SolidColorBrush(_palette.SurfaceStroke), 1);
+
+    private void DrawBackdrop(DrawingContext context, DonutGeometry g, Point c) =>
+        context.DrawEllipse(new SolidColorBrush(_palette.Surface), BackdropPen, c, g.OuterRadius + 5, g.OuterRadius + 5);
+
+    private void DrawHubLayer(DrawingContext context, DonutGeometry g, Point c)
+    {
+        context.DrawEllipse(new SolidColorBrush(_palette.Hub), BackdropPen, c, g.HubRadius, g.HubRadius);
+        DrawHub(context, g, c, Slices);
+    }
+
+    private void DrawFocusIfShown(DrawingContext context, DonutGeometry g, Point c)
+    {
+        if (_focusVisible && IsFocused && _focusIndex >= 0 && _appear >= 1)
+            DrawFocusRing(context, g, c, _focusIndex);
+    }
+
+    /// <summary>An open arc; angles in degrees, 0 at 12 o'clock, positive sweep clockwise.</summary>
+    private static void DrawArc(DrawingContext context, Pen pen, Point c, double radius, double start, double sweep)
+    {
+        sweep = Math.Clamp(sweep, 0.5, 359.5);
+        var arc = new StreamGeometry();
+        using (var ctx = arc.Open())
+        {
+            var (sx, sy) = DonutGeometry.PointAt(start, radius);
+            var (ex, ey) = DonutGeometry.PointAt(start + sweep, radius);
+            ctx.BeginFigure(new Point(c.X + sx, c.Y + sy), false);
+            ctx.ArcTo(new Point(c.X + ex, c.Y + ey), new Size(radius, radius), 0, sweep > 180, SweepDirection.Clockwise);
+            ctx.EndFigure(false);
+        }
+        context.DrawGeometry(null, pen, arc);
+    }
+
+    /// <summary>A filled pie wedge from the center; angles as in <see cref="DrawArc"/>.</summary>
+    private static StreamGeometry PieGeometry(Point c, double radius, double start, double sweep)
+    {
+        var pie = new StreamGeometry();
+        using var ctx = pie.Open();
+        var (sx, sy) = DonutGeometry.PointAt(start, radius);
+        var (ex, ey) = DonutGeometry.PointAt(start + sweep, radius);
+        ctx.BeginFigure(c, true);
+        ctx.LineTo(new Point(c.X + sx, c.Y + sy));
+        ctx.ArcTo(new Point(c.X + ex, c.Y + ey), new Size(radius, radius), 0, sweep > 180, SweepDirection.Clockwise);
+        ctx.EndFigure(true);
+        return pie;
+    }
+
+    // ---- Open / close choreography helpers ----
+
+    /// <summary>Scales and turns around the donut center and fades; nothing is pushed once fully shown.</summary>
+    private static IDisposable PushAppear(DrawingContext context, Point c, double scale, double degrees, double opacity)
+    {
+        if (scale == 1 && degrees == 0 && opacity >= 1)
+            return EmptyDisposable.Instance;
+        var m = Matrix.CreateTranslation(-c.X, -c.Y) * Matrix.CreateScale(scale, scale)
+            * Matrix.CreateRotation(degrees * Math.PI / 180) * Matrix.CreateTranslation(c.X, c.Y);
+        var transform = context.PushTransform(m);
+        var fade = context.PushOpacity(opacity);
+        return new PushedPair(fade, transform);
+    }
+
+    private sealed class EmptyDisposable : IDisposable
+    {
+        public static readonly EmptyDisposable Instance = new();
+        public void Dispose() { }
+    }
+
+    private sealed class PushedPair(IDisposable inner, IDisposable outer) : IDisposable
+    {
+        public void Dispose()
+        {
+            inner.Dispose();
+            outer.Dispose();
+        }
     }
 
     private void DrawSlice(DrawingContext context, DonutGeometry g, Point c, int i, IDonutSlice? slice, long now)

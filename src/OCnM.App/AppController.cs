@@ -25,7 +25,7 @@ internal sealed class AppController : IDisposable
     private PlatformServices _platform = null!;
     private ConfigService _config = null!;
     private DonutViewModel _donutVm = null!;
-    private DonutWindow _donut = null!;
+    private DonutWindow? _donut;
     private WindowIcon _icon = null!;
     private ITrayService? _tray;
     private SettingsWindow? _settings;
@@ -53,14 +53,6 @@ internal sealed class AppController : IDisposable
         _icon = AppIcon.Create();
 
         _donutVm = new DonutViewModel(_config, _transfers, _platform.FolderOpener);
-        _donut = new DonutWindow
-        {
-            DataContext = _donutVm,
-            Icon = _icon,
-            // Always-on-top is only meaningful where we also place the window ourselves.
-            Topmost = _platform.CanPositionWindows,
-        };
-        _donutVm.FolderPicker = _donut;
         _donutVm.HideRequested += (_, delay) =>
         {
             if (delay <= TimeSpan.Zero)
@@ -71,20 +63,9 @@ internal sealed class AppController : IDisposable
         _donutVm.SettingsRequested += (_, _) => OpenSettings();
         _donutVm.ShowRequested += (_, _) =>
         {
-            if (!_donut.IsVisible)
+            if (_donut?.IsVisible != true)
                 Show(atCursor: false);
         };
-        _donut.DismissRequested += (_, reason) => OnDismiss(reason);
-        _donut.Closing += (_, e) =>
-        {
-            // A compositor "close window" just hides the donut; Quit is explicit.
-            if (!_quitting)
-            {
-                e.Cancel = true;
-                Hide();
-            }
-        };
-        _donut.Opened += (_, _) => DetectBackend(_donut);
 
         _config.Changed += (_, c) => ApplySettings(c.Settings);
         ApplySettings(_config.Current.Settings);
@@ -105,6 +86,40 @@ internal sealed class AppController : IDisposable
         }
 
         ReportConfigProblems();
+    }
+
+    /// <summary>
+    /// Creates the donut window on first use, not at startup. The native Wayland backend creates the toplevel as soon
+    /// as the window exists, and Niri assigns a toplevel to the workspace that is active at its first commit. A donut
+    /// created at login (--hide) would therefore open on the login workspace and pull the view there on first show.
+    /// Later shows are fine: Hide destroys the toplevel and Show creates a fresh one on the current workspace.
+    /// </summary>
+    private DonutWindow EnsureDonut()
+    {
+        if (_donut is not null)
+            return _donut;
+        var donut = new DonutWindow
+        {
+            DataContext = _donutVm,
+            Icon = _icon,
+            // Always-on-top is only meaningful where we also place the window ourselves.
+            Topmost = _platform.CanPositionWindows,
+            HideOnFocusLoss = _config.Current.Settings.HideOnFocusLoss,
+        };
+        donut.SetReducedMotion(Motion.Reduced);
+        donut.DismissRequested += (_, reason) => OnDismiss(reason);
+        donut.Closing += (_, e) =>
+        {
+            // A compositor "close window" just hides the donut; Quit is explicit.
+            if (!_quitting)
+            {
+                e.Cancel = true;
+                Hide();
+            }
+        };
+        donut.Opened += (_, _) => DetectBackend(donut);
+        _donutVm.FolderPicker = donut;
+        return _donut = donut;
     }
 
     private void ReportConfigProblems()
@@ -167,7 +182,7 @@ internal sealed class AppController : IDisposable
     /// </param>
     public void Toggle(bool atCursor, bool hideOnlyIfFocused = true)
     {
-        if (_donut.IsVisible && (_donut.IsActive || !hideOnlyIfFocused))
+        if (_donut is { IsVisible: true } donut && (donut.IsActive || !hideOnlyIfFocused))
             Hide();
         else
             Show(atCursor);
@@ -177,13 +192,14 @@ internal sealed class AppController : IDisposable
     {
         CancelHide();
         _donutVm.RefreshSliceStates();
+        var donut = EnsureDonut();
         if (_platform.CanPositionWindows)
-            PlaceWindow(atCursor);
-        _donut.MarkShown();
-        _donut.Show();
-        _donut.Activate();
-        _donut.FocusDonut();
-        _donut.PlayEnter();
+            PlaceWindow(donut, atCursor);
+        donut.MarkShown();
+        donut.Show();
+        donut.Activate();
+        donut.FocusDonut();
+        donut.PlayEnter();
     }
 
     public void Hide()
@@ -191,7 +207,7 @@ internal sealed class AppController : IDisposable
         CancelHide();
         if (_donutVm.Overlay is RenameOverlayViewModel or ColorOverlayViewModel)
             _donutVm.CloseOverlay();
-        _donut.HideAnimated();
+        _donut?.HideAnimated();
     }
 
     private void OnDismiss(DismissReason reason)
@@ -212,10 +228,10 @@ internal sealed class AppController : IDisposable
     }
 
     /// <summary>Centers the donut on the cursor (Windows/X11), kept inside the monitor's work area.</summary>
-    private void PlaceWindow(bool atCursor)
+    private void PlaceWindow(DonutWindow donut, bool atCursor)
     {
         ScreenPoint? cursor = atCursor && _platform.Cursor.TryGetCursorPosition(out var p) ? p : null;
-        var screens = _donut.Screens;
+        var screens = donut.Screens;
         var screen = cursor is { } c ? screens.ScreenFromPoint(new PixelPoint(c.X, c.Y)) : null;
         screen ??= screens.Primary ?? screens.All.FirstOrDefault();
         if (screen is null)
@@ -224,12 +240,12 @@ internal sealed class AppController : IDisposable
         var work = screen.WorkingArea;
         var area = new ScreenRect(work.X, work.Y, work.Width, work.Height);
         var center = cursor ?? new ScreenPoint(work.X + work.Width / 2, work.Y + work.Height / 2);
-        var width = (int)Math.Ceiling(_donut.Width * screen.Scaling);
-        var height = (int)Math.Ceiling(_donut.Height * screen.Scaling);
+        var width = (int)Math.Ceiling(donut.Width * screen.Scaling);
+        var height = (int)Math.Ceiling(donut.Height * screen.Scaling);
         // Center the ring (not the whole window, which has the toast strip below) on the cursor.
-        var ringOffset = (int)((_donut.Height - _donut.Width) / 2 * screen.Scaling);
+        var ringOffset = (int)((donut.Height - donut.Width) / 2 * screen.Scaling);
         var pos = ScreenMath.CenterClamped(center with { Y = center.Y + ringOffset }, width, height, area);
-        _donut.Position = new PixelPoint(pos.X, pos.Y);
+        donut.Position = new PixelPoint(pos.X, pos.Y);
     }
 
     private void ScheduleHide(TimeSpan delay)
@@ -239,7 +255,7 @@ internal sealed class AppController : IDisposable
         _hideTimer.Tick += (_, _) =>
         {
             // Keep the donut while the user is pointing at it (e.g. about to press Undo) or something is pending.
-            if (_donut.IsPointerOver || _donutVm.Overlay is not null || _donutVm.IsBusy || _donutVm.IsInteracting || _donutVm.IsPinned)
+            if (_donut?.IsPointerOver == true || _donutVm.Overlay is not null || _donutVm.IsBusy || _donutVm.IsInteracting || _donutVm.IsPinned)
             {
                 _hideTimer!.Interval = TimeSpan.FromMilliseconds(1500);
                 if (_donutVm.IsPinned)
@@ -288,7 +304,7 @@ internal sealed class AppController : IDisposable
         }
         _quitting = true;
         _settings?.Close();
-        _donut.Close();
+        _donut?.Close();
         _desktop.Shutdown();
     }
 
@@ -302,9 +318,12 @@ internal sealed class AppController : IDisposable
             ThemePreference.Dark => ThemeVariant.Dark,
             _ => ThemeVariant.Default,
         };
-        _donut.HideOnFocusLoss = settings.HideOnFocusLoss;
         Motion.Reduced = settings.ReduceMotion || _systemReducedMotion;
-        _donut.SetReducedMotion(Motion.Reduced);
+        if (_donut is not null)
+        {
+            _donut.HideOnFocusLoss = settings.HideOnFocusLoss;
+            _donut.SetReducedMotion(Motion.Reduced);
+        }
         UpdateTray(settings.ShowTrayIcon);
         UpdateHotkey(settings.Hotkey);
     }

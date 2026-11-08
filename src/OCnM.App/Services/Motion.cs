@@ -4,19 +4,19 @@ using System.Runtime.InteropServices;
 namespace OCnM.App.Services;
 
 /// <summary>
-/// Shared motion tokens. Enter animations decelerate, exits are shorter (about 65% of enter) and
-/// accelerate. <see cref="Reduced"/> turns all of them into instant state changes.
+/// Shared motion tokens. Animations decelerate (start fast, settle); exits are shorter than enters.
+/// <see cref="Reduced"/> turns all of them into instant state changes.
 /// </summary>
 public static partial class Motion
 {
     /// <summary>Hover / focus / drag highlight changes.</summary>
     public const double StateMs = 120;
 
-    /// <summary>The donut appearing.</summary>
-    public const double EnterMs = 190;
+    /// <summary>The donut appearing: the hub fades in, then the ring is wiped in clockwise from the top.</summary>
+    public const double EnterMs = 380;
 
-    /// <summary>The donut disappearing.</summary>
-    public const double ExitMs = 120;
+    /// <summary>The donut disappearing: it fades out inside two counter-rotating arcs that spin away.</summary>
+    public const double ExitMs = 240;
 
     /// <summary>Toast and overlay cards.</summary>
     public const double CardMs = 180;
@@ -26,6 +26,12 @@ public static partial class Motion
     public static double EaseOut(double t) => 1 - Math.Pow(1 - Math.Clamp(t, 0, 1), 3);
 
     public static double EaseIn(double t) => Math.Pow(Math.Clamp(t, 0, 1), 3);
+
+    public static double EaseInOut(double t)
+    {
+        t = Math.Clamp(t, 0, 1);
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.Pow(-2 * t + 2, 3) / 2;
+    }
 
     /// <summary>Best-effort read of the OS "reduce animations" preference.</summary>
     public static bool SystemPrefersReducedMotion()
